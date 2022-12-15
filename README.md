@@ -1,55 +1,44 @@
 [![Community badge: Incubating](https://img.shields.io/badge/Lifecycle-Incubating-blue)](https://github.com/Camunda-Community-Hub/community/blob/main/extension-lifecycle.md#incubating-)
 [![Community extension badge](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)](https://github.com/camunda-community-hub/community)
 
-# maven-template
+# Coworker
 
-Empty maven project with defaults that incorporates Camunda Community Hub best practices.
+This project aims to provide a neat Kotlin Coroutines API to Zeebe Gateway. Right now there is just a worker coroutine API.
 
 ## Usage
 
-* Use this as a template for new Camunda Community Hub
-  projects. (https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template)
-* Change names and URLs in `pom.xml`
-  * `groupId`/`artifactId`
-  ```
-  <groupId>org.camunda.community.extension.name</groupId>
-  <artifactId>give-me-a-name</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <packaging>jar</packaging>
-  ```
-  * URLs
-  ```
-  <scm>
-    <url>https://github.com/camunda-community-hub/maven-template</url>
-    <connection>scm:git:git@github.com:camunda-community-hub/maven-template.git</connection>
-    <developerConnection>scm:git:git@github.com:camunda-community-hub/maven-tenmplate.git
-    </developerConnection>
-    <tag>HEAD</tag>
-  </scm>
-  ```
-* Add contribution guide to the repo (
-  e.g. [Contributing to this project](https://gist.github.com/jwulf/2c7f772570bfc8654b0a0a783a3f165e) )
-* Select desired license and exchange `LICENSE` file
+* Add the dependency
+```xml
+    <dependency>
+      <groupId>org.camunda.community.extension.coworker</groupId>
+      <artifactId>coworker-core</artifactId>
+      <version>x.y.z</version>
+    </dependency>
+```
+* Obtain a `ZeebeClient` instance, for example, `ZeebeClient.newClient()`
+* Use the extension function to obtain a `Cozeebe` instance `zeebeClient.toCozeebe()`
+* Create a new Coworker instance:
+```kotlin
+val coworker = cozeebe.newCoWorker(jobType, object : JobHandler {
+    override suspend fun handle(client: JobClient, job: ActivatedJob) {
+        val variables = job.variablesAsMap
+        val aVar = variables["a"] as Int
+        val bVar = variables["b"] as Int
+        variables["c"] = aVar + bVar
+
+        client.newCompleteCommand(job).variables(variables).send().await()
+    }
+})
+```
+* Open it, like Zeebe's Java Worker: `coworker.open()`
 
 ## Features
 
-- IDE integration
-  - https://editorconfig.org/
-- GitHub Integration
-  - Dependabot enabled for Maven dependencies
-  - Backport action (https://github.com/zeebe-io/backport-action)
-- Maven POM
-  - Release to Maven, Nexus and GitHub
-  - Google Code Formatter
-  - JUnit 5
-  - AssertJ
-  - Surefire Plugin
-  - JaCoCo Plugin (test coverage)
-  - flaky test extractor (https://github.com/zeebe-io/flaky-test-extractor-maven-plugin)
+- Coroutine native implementation (you can use suspend functions inside `JobHandler` methods)
+- Easily combine with existing Zeebe Client Java libs.
+- Because of using coroutines Coworker could activate more jobs containing blocking logic (Database queries, HTTP REST calls, etc.) if they adopted coroutines (a.k.a non-blocking API) than a classic Zeebe Java worker. You can see results for yourself in the benchmark module.
 
-## Versions
+## Missing Features
 
-Different versions are represented in different branches
-
-- `main` - Java 11
-
+* Spring (or Spring Boot) Integration
+* Coroutines native `JobClient`
