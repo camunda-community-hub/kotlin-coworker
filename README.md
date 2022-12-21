@@ -1,7 +1,7 @@
 [![Community badge: Incubating](https://img.shields.io/badge/Lifecycle-Incubating-blue)](https://github.com/Camunda-Community-Hub/community/blob/main/extension-lifecycle.md#incubating-)
 [![Community extension badge](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)](https://github.com/camunda-community-hub/community)
 
-# Coworker
+# Kotlin-coworker
 
 This project aims to provide a neat Kotlin Coroutines API to Zeebe Gateway. Right now there is just a worker coroutine API.
 
@@ -9,11 +9,11 @@ This project aims to provide a neat Kotlin Coroutines API to Zeebe Gateway. Righ
 
 * Add the dependency
 ```xml
-    <dependency>
-      <groupId>org.camunda.community.extension.coworker</groupId>
-      <artifactId>coworker-core</artifactId>
-      <version>x.y.z</version>
-    </dependency>
+<dependency>
+    <groupId>org.camunda.community.extension.kotlin.coworker</groupId>
+    <artifactId>coworker-core</artifactId>
+    <version>x.y.z</version>
+</dependency>
 ```
 * Obtain a `ZeebeClient` instance, for example, `ZeebeClient.newClient()`
 * Use the extension function to obtain a `Cozeebe` instance `zeebeClient.toCozeebe()`

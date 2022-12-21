@@ -4,8 +4,8 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.camunda.community.extension.coworker</groupId>
-  <artifactId>coworker</artifactId>
+  <groupId>org.camunda.community.extension.kotlin.coworker</groupId>
+  <artifactId>kotlin-coworker</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <modules>
     <module>coworker-core</module>
@@ -17,9 +17,9 @@
   <name>coworker</name>
 
   <scm>
-    <url>https://github.com/camunda-community-hub/coworker</url>
-    <connection>scm:git:git@github.com:camunda-community-hub/coworker.git</connection>
-    <developerConnection>scm:git:git@github.com:camunda-community-hub/coworker.git
+    <url>https://github.com/camunda-community-hub/kotlin-coworker</url>
+    <connection>scm:git:git@github.com:camunda-community-hub/kotlin-coworker.git</connection>
+    <developerConnection>scm:git:git@:github.com:camunda-community-hub/kotlin-coworker.git
     </developerConnection>
     <tag>HEAD</tag>
   </scm>
