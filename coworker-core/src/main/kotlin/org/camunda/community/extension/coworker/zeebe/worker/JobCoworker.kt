@@ -60,7 +60,8 @@ class JobCoworker(
         if (isPollScheduled.compareAndSet(false, true)) {
             CoroutineScope(scheduledCoroutineContext).launch {
                 Schedule
-                    .spaced<Unit>(pollInterval)
+                    .once<Unit>()
+                    .delay { pollInterval }
                     .repeat(::onScheduledPoll)
             }
         }
