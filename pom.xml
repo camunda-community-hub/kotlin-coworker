@@ -11,6 +11,7 @@
     <module>coworker-core</module>
     <module>kotlin-gateway-protocol-impl</module>
     <module>benchmark</module>
+    <module>coworker-spring-boot-starter</module>
   </modules>
   <packaging>pom</packaging>
 
