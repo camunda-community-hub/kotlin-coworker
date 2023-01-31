@@ -1,1 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=org.camunda.community.extension.coworker.spring.CoworkerAutoConfiguration
