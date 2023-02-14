@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration
 open class CoworkerAutoConfiguration {
 
     @Bean
-    open fun coZeebe(zeebeClient: ZeebeClient): Cozeebe = zeebeClient.toCozeebe()
+    open fun coZeebe(zeebeClient: ZeebeClient): Cozeebe = LazyCozeebe(zeebeClient)
 
     @Bean
     open fun coworkerManager(): CoworkerManager = CoworkerManager()
