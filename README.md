@@ -37,8 +37,38 @@ val coworker = cozeebe.newCoWorker(jobType, object : JobHandler {
 - Coroutine native implementation (you can use suspend functions inside `JobHandler` methods)
 - Easily combine with existing Zeebe Client Java libs.
 - Because of using coroutines Coworker could activate more jobs containing blocking logic (Database queries, HTTP REST calls, etc.) if they adopted coroutines (a.k.a non-blocking API) than a classic Zeebe Java worker. You can see results for yourself in the benchmark module.
+- Spring Boot Starter
+
+### Spring Boot Starter
+
+It requires:
+- Spring Boot 2.7.+ (should work with Spring Boot 3.0.x but haven't tested properly).
+- JDK 11
+
+First, you need to add dependency:
+```xml
+<dependency>
+    <groupId>org.camunda.community.extension.kotlin.coworker</groupId>
+    <artifactId>coworker-spring-boot-starter</artifactId>
+    <version>x.y.z</version>
+</dependency>
+```
+
+Then, if you need to define Zeebe Worker with coroutines, like this:
+```kotlin
+@Coworker(type = "test")
+suspend fun testWorker(jobClient: JobClient, job: ActivatedJob) {
+  someService.callSomeSuspendMethod(job.variables)
+  jobClient.newCompleteCommand(activatedJob.key).send().await()
+}
+```
+
+Note:
+1. Method should be `suspend`
+2. Method should be annotated with `@Coworker`
+3. Method should not call thread-blocking functions. Use Kotlin's `.await()` instead of `.join()` in the example upward.
+4. It hasn't had all the features from Spring Zeebe, but it seems that some features will be ported eventually. Create an issue or PR with the feature that you need :)
 
 ## Missing Features
 
-* Spring (or Spring Boot) Integration
 * Coroutines native `JobClient`
