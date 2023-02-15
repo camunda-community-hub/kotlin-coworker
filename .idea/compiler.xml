@@ -6,12 +6,14 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="coworker-spring-boot-starter" />
         <module name="kotlin-gateway-protocol-impl" />
         <module name="coworker-core" />
         <module name="benchmark" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="coworker" target="1.8" />
       <module name="gateway-mock-app" target="11" />
     </bytecodeTargetLevel>
   </component>
