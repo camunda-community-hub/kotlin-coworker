@@ -13,20 +13,20 @@ import org.camunda.community.extension.coworker.spring.annotation.Coworker
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import kotlin.properties.Delegates
+import java.util.concurrent.atomic.AtomicBoolean
 
 @ZeebeSpringTest
 @SpringBootTest(classes = [CoworkerAutoConfiguration::class, SmokeTest::class])
 open class SmokeTest {
 
-    private var firstCalled by Delegates.notNull<Boolean>()
+    private val firstCalled: AtomicBoolean = AtomicBoolean(false)
 
     @Autowired
     private lateinit var zeebeClient: ZeebeClient
 
     @Coworker(type = "test1")
     suspend fun firstWorker(jobClient: JobClient, activatedJob: ActivatedJob) {
-        firstCalled = true
+        firstCalled.set(true)
         jobClient.newCompleteCommand(activatedJob.key).send().await()
     }
 
