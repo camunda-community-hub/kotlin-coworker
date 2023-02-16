@@ -53,7 +53,7 @@
     <zeebe-process-test.version>${zeebe.version}</zeebe-process-test.version>
     <zeebe-test-container.version>3.5.2</zeebe-test-container.version>
     <testcontainers.version>1.17.6</testcontainers.version>
-    <assertj.version>3.23.1</assertj.version>
+    <assertj.version>3.24.2</assertj.version>
 
     <error_prone_annotations.version>2.18.0</error_prone_annotations.version>
     <slf4j.version>2.0.6</slf4j.version>
