@@ -62,7 +62,7 @@
 
     <plugin.version.protobuf-maven-plugin>0.6.1</plugin.version.protobuf-maven-plugin>
     <extension.version.os-maven-plugin>1.7.1</extension.version.os-maven-plugin>
-    <spring-zeebe.version>8.1.15</spring-zeebe.version>
+    <spring-zeebe.version>8.1.17</spring-zeebe.version>
     <spring-boot.version>2.7.6</spring-boot.version>
     <scala.version>2.13.9</scala.version>
   </properties>
