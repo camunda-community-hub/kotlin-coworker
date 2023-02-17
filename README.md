@@ -69,6 +69,34 @@ Note:
 3. Method should not call thread-blocking functions. Use Kotlin's `.await()` instead of `.join()` in the example upward.
 4. It hasn't had all the features from Spring Zeebe, but it seems that some features will be ported eventually. Create an issue or PR with the feature that you need :)
 
+### Override coroutine context for each coworker execution
+
+Sometimes you need to provide some data in a coroutine context (an MDC map, for example) based on the job.
+To do so, you have to override `additionalCoroutineContextProvider` from `JobCoworkerBuilder`. Something, like this:
+
+```kotlin
+client.toCozeebe().newCoWorker(jobType) { client, job ->
+            // your worker logic
+            client.newCompleteCommand(job).send().await()
+        }
+            // override additionalCoroutineContextProvider
+            .also { it.additionalCoroutineContextProvider = JobCoroutineContextProvider { testCoroutineContext } }
+            // open worker
+            .open().use {
+                // logic to keep the worker running
+            }
+```
+
+If you are using the Spring Boot Starter, you need just to create a bean with the type `JobCoroutineContextProvider` in your Spring context. Like this:
+```kotlin
+    @Bean
+    fun loggingJobCoroutineContextProvider(): JobCoroutineContextProvider {
+        return JobCoroutineContextProvider {
+          MDCContext()
+        }
+    }
+```
+
 ## Missing Features
 
 * Coroutines native `JobClient`

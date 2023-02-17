@@ -8,7 +8,8 @@ import io.camunda.zeebe.spring.client.config.ZeebeClientStarterAutoConfiguration
 import org.camunda.community.extension.coworker.Cozeebe
 import org.camunda.community.extension.coworker.spring.annotation.CoworkerAnnotationProcessor
 import org.camunda.community.extension.coworker.spring.annotation.CoworkerManager
-import org.camunda.community.extension.coworker.toCozeebe
+import org.camunda.community.extension.coworker.zeebe.worker.JobCoroutineContextProvider
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
@@ -25,7 +26,9 @@ open class CoworkerAutoConfiguration {
     open fun coZeebe(zeebeClient: ZeebeClient): Cozeebe = LazyCozeebe(zeebeClient)
 
     @Bean
-    open fun coworkerManager(): CoworkerManager = CoworkerManager()
+    open fun coworkerManager(
+        @Autowired(required = false) jobCoroutineContextProvider: JobCoroutineContextProvider?
+    ): CoworkerManager = CoworkerManager(jobCoroutineContextProvider)
 
     @Bean
     open fun coworkerAnnotationProcessor(

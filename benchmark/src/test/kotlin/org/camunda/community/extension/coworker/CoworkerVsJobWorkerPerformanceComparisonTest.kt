@@ -1,14 +1,12 @@
 package org.camunda.community.extension.coworker
 
 import io.camunda.zeebe.client.ZeebeClient
-import io.camunda.zeebe.client.api.response.ActivatedJob
-import io.camunda.zeebe.client.api.worker.JobClient
 import io.camunda.zeebe.model.bpmn.Bpmn
 import io.zeebe.containers.ZeebeContainer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
+import mu.KLogging
 import org.assertj.core.api.Assertions.assertThat
-import org.camunda.community.extension.coworker.zeebe.worker.handler.JobHandler
 import org.junit.jupiter.api.Test
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -109,14 +107,12 @@ class CoworkerVsJobWorkerPerformanceComparisonTest {
             .use { zeebeClient ->
                 val cozeebe = zeebeClient.toCozeebe()
                 val coworkerBuilder = cozeebe.newCoWorker(
-                    jobType,
-                    object : JobHandler {
-                        override suspend fun handle(client: JobClient, job: ActivatedJob) {
-                            delay(1.seconds)
-                            client.newCompleteCommand(job).send().await()
-                        }
-                    }
-                )
+                    jobType
+                ) { client, job ->
+                    logger.info { "Got it!" }
+                    delay(1.seconds)
+                    client.newCompleteCommand(job).send().await()
+                }
                 val coworkerDuration = coworkerBuilder.open().use {
                     measureTime {
                         val processInstanceResults = (1..instancesCount)
@@ -140,4 +136,6 @@ class CoworkerVsJobWorkerPerformanceComparisonTest {
         // is more than 2 times faster
         assertThat(coworkerDuration.toJavaDuration()).isLessThan((zeebeClientDuration / 2).toJavaDuration())
     }
+
+    companion object: KLogging()
 }

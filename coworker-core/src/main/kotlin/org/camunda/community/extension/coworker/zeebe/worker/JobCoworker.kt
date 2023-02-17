@@ -29,7 +29,8 @@ class JobCoworker(
     private val jobExecutableFactory: JobExecutableFactory,
     private val initialPollInterval: Duration,
     private val backoffSupplier: BackoffSupplier,
-    jobPoller: JobPoller
+    jobPoller: JobPoller,
+    private val additionalCoroutineContextProvider: JobCoroutineContextProvider
 ) : JobWorker, Closeable {
 
     private val acquiringJobs = AtomicBoolean(true)
@@ -152,7 +153,7 @@ class JobCoworker(
     }
 
     private fun handleJob(job: ActivatedJob) {
-        CoroutineScope(scheduledCoroutineContext)
+        CoroutineScope(scheduledCoroutineContext + additionalCoroutineContextProvider.provide(job))
             .launch(block = jobExecutableFactory.create(job) { handleJobFinished() })
     }
 

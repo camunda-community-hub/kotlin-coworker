@@ -97,11 +97,11 @@ class CozeebeImpl(
         jobClient = jobClient,
         gatewayStub = gatewayCoroutineStub,
         jsonMapper = jsonMapper,
+        jobType = jobType,
+        jobHandler = jobHandler,
         retryPredicate = retryPredicate,
         executorService = scheduledExecutorService,
-        closeables = closeables,
-        jobType = jobType,
-        jobHandler = jobHandler
+        closeables = closeables
     )
 
     override fun configuration() = zeebeClientConfiguration
