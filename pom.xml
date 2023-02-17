@@ -6,7 +6,7 @@
 
   <groupId>org.camunda.community.extension.kotlin.coworker</groupId>
   <artifactId>kotlin-coworker</artifactId>
-  <version>0.2.0-SNAPSHOT</version>
+  <version>0.3.0-SNAPSHOT</version>
   <modules>
     <module>coworker-core</module>
     <module>kotlin-gateway-protocol-impl</module>
