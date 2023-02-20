@@ -10,9 +10,11 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.future.await
 import mu.KLogging
 import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.Awaitility
 import org.camunda.community.extension.coworker.zeebe.worker.JobCoroutineContextProvider
 import org.junit.jupiter.api.Test
 import java.time.Duration
+import java.util.LinkedList
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
@@ -43,7 +45,8 @@ class JobCoworkerIntegrationTest {
             .endEvent()
             .done()
 
-        val deploymentEvent = client.newDeployResourceCommand().addProcessModel(simpleProcess, "process.bpmn").send().join()
+        val deploymentEvent =
+            client.newDeployResourceCommand().addProcessModel(simpleProcess, "process.bpmn").send().join()
 
         client.toCozeebe().newCoWorker(jobType) { client, job ->
             logger.info { "Got it!" }
@@ -73,7 +76,8 @@ class JobCoworkerIntegrationTest {
             .endEvent()
             .done()
 
-        val deploymentEvent = client.newDeployResourceCommand().addProcessModel(simpleProcess, "process.bpmn").send().join()
+        val deploymentEvent =
+            client.newDeployResourceCommand().addProcessModel(simpleProcess, "process.bpmn").send().join()
 
         val testCoroutineContext = TestCoroutineContext()
         client.toCozeebe().newCoWorker(jobType) { client, job ->
@@ -82,16 +86,72 @@ class JobCoworkerIntegrationTest {
         }
             .also { it.additionalCoroutineContextProvider = JobCoroutineContextProvider { testCoroutineContext } }
             .open().use {
-            val instanceResult = client.newCreateInstanceCommand()
-                .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
-                .withResult().requestTimeout(Duration.ofMinutes(1)).send().join()
-            BpmnAssert.assertThat(instanceResult).isCompleted.hasNoIncidents()
+                val instanceResult = client.newCreateInstanceCommand()
+                    .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
+                    .withResult().requestTimeout(Duration.ofMinutes(1)).send().join()
+                BpmnAssert.assertThat(instanceResult).isCompleted.hasNoIncidents()
+            }
+    }
+
+    @Test
+    fun `should retry and throw an error by default if exception occurred while handling the job`() {
+        // given
+        val jobType = "defaultErrorHandler"
+        val serviceTaskName = "default-error-handler"
+        val simpleProcess = Bpmn
+            .createExecutableProcess()
+            .startEvent()
+            .serviceTask(serviceTaskName).zeebeJobRetries("3")
+            .zeebeJobType(jobType)
+            .endEvent()
+            .done()
+
+        val deploymentEvent =
+            client.newDeployResourceCommand().addProcessModel(simpleProcess, "process.bpmn").send().join()
+
+        val expectedRetriesQueue = LinkedList(arrayListOf(3, 2, 1))
+        val exceptionMessage = "Oops, something bad happened"
+        val processInstanceEvent = client.toCozeebe().newCoWorker(jobType) { _, activatedJob ->
+            // we are checking that retries are decreasing
+            assertThat(activatedJob.retries).isEqualTo(expectedRetriesQueue.poll())
+            throw Exception(exceptionMessage)
         }
+            .open().use {
+
+                // when
+                val instanceResult = client.newCreateInstanceCommand()
+                    .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
+                    .requestTimeout(Duration.ofMinutes(1))
+                    .send()
+                    .join()
+                Awaitility
+                    .await()
+                    .atMost(Duration.ofSeconds(5))
+                    .pollDelay(Duration.ofMillis(500))
+                    .until {
+                        recordStream
+                            .incidentRecords()
+                            .any { it.value.processInstanceKey == instanceResult.processInstanceKey }
+                    }
+                instanceResult
+            }
+
+        // then
+        BpmnAssert
+            .assertThat(processInstanceEvent)
+            .isNotCompleted
+            .hasAnyIncidents()
+            .extractingLatestIncident()
+            .isUnresolved
+            .extractingErrorMessage()
+            .contains(exceptionMessage)
+        // check that we are walk through all retries
+        assertThat(expectedRetriesQueue).isEmpty()
     }
 
-    class TestCoroutineContext: AbstractCoroutineContextElement(Key) {
-        companion object Key: CoroutineContext.Key<TestCoroutineContext>
+    class TestCoroutineContext : AbstractCoroutineContextElement(Key) {
+        companion object Key : CoroutineContext.Key<TestCoroutineContext>
     }
 
-    companion object: KLogging()
+    companion object : KLogging()
 }
