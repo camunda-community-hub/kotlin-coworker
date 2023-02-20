@@ -48,7 +48,7 @@
     <arrow.version>1.1.5</arrow.version>
     <kotlin-logging.version>3.0.5</kotlin-logging.version>
 
-    <junit-bom.version>5.9.1</junit-bom.version>
+    <junit-bom.version>5.9.2</junit-bom.version>
     <mockk.version>1.13.3</mockk.version>
     <zeebe-process-test.version>${zeebe.version}</zeebe-process-test.version>
     <zeebe-test-container.version>3.5.2</zeebe-test-container.version>
