@@ -1,10 +1,10 @@
 package org.camunda.community.extension.coworker.zeebe.worker
 
-import arrow.fx.coroutines.Schedule
 import io.camunda.zeebe.client.api.response.ActivatedJob
 import io.camunda.zeebe.client.api.worker.BackoffSupplier
 import io.camunda.zeebe.client.api.worker.JobWorker
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KLogging
 import org.camunda.community.extension.coworker.zeebe.worker.handler.JobExecutableFactory
@@ -59,10 +59,8 @@ class JobCoworker(
     private fun schedulePoll() {
         if (isPollScheduled.compareAndSet(false, true)) {
             CoroutineScope(scheduledCoroutineContext).launch {
-                Schedule
-                    .once<Unit>()
-                    .delay { pollInterval }
-                    .repeat(::onScheduledPoll)
+                delay(pollInterval)
+                onScheduledPoll()
             }
         }
     }

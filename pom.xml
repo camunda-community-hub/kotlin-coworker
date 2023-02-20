@@ -40,20 +40,19 @@
     <zeebe.version>8.1.8</zeebe.version>
 
     <protobuf.version>3.21.12</protobuf.version>
-    <grpc.version>1.51.1</grpc.version>
+    <grpc.version>1.53.0</grpc.version>
     <grpc.kotlin.version>1.3.0</grpc.kotlin.version>
 
     <kotlin.version>1.7.21</kotlin.version>
     <kotlinx-coroutines.version>1.6.4</kotlinx-coroutines.version>
-    <arrow.version>1.1.3</arrow.version>
     <kotlin-logging.version>3.0.5</kotlin-logging.version>
 
-    <junit-bom.version>5.9.1</junit-bom.version>
+    <junit-bom.version>5.9.2</junit-bom.version>
     <mockk.version>1.13.3</mockk.version>
     <zeebe-process-test.version>${zeebe.version}</zeebe-process-test.version>
     <zeebe-test-container.version>3.5.2</zeebe-test-container.version>
     <testcontainers.version>1.17.6</testcontainers.version>
-    <assertj.version>3.23.1</assertj.version>
+    <assertj.version>3.24.2</assertj.version>
 
     <error_prone_annotations.version>2.18.0</error_prone_annotations.version>
     <slf4j.version>2.0.6</slf4j.version>
@@ -62,9 +61,10 @@
 
     <plugin.version.protobuf-maven-plugin>0.6.1</plugin.version.protobuf-maven-plugin>
     <extension.version.os-maven-plugin>1.7.1</extension.version.os-maven-plugin>
-    <spring-zeebe.version>8.1.15</spring-zeebe.version>
+    <spring-zeebe.version>8.1.17</spring-zeebe.version>
     <spring-boot.version>2.7.6</spring-boot.version>
     <scala.version>2.13.9</scala.version>
+    <awaitility.version>4.2.0</awaitility.version>
   </properties>
 
   <dependencyManagement>
@@ -102,13 +102,6 @@
         <groupId>io.github.microutils</groupId>
         <artifactId>kotlin-logging-jvm</artifactId>
         <version>${kotlin-logging.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.arrow-kt</groupId>
-        <artifactId>arrow-stack</artifactId>
-        <version>${arrow.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
@@ -241,6 +234,11 @@
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
         <version>${assertj.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>${awaitility.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

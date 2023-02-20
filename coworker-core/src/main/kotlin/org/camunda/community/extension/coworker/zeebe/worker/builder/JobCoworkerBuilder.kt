@@ -7,6 +7,7 @@ import io.camunda.zeebe.client.api.worker.JobClient
 import io.camunda.zeebe.client.api.worker.JobWorker
 import io.camunda.zeebe.client.impl.command.ArgumentUtil.ensureGreaterThan
 import io.camunda.zeebe.client.impl.command.ArgumentUtil.ensureNotNullNorEmpty
+import io.camunda.zeebe.client.impl.worker.JobWorkerBuilderImpl
 import io.camunda.zeebe.gateway.protocol.GatewayGrpcKt
 import io.camunda.zeebe.gateway.protocol.GatewayOuterClass
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -21,7 +22,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 
-private val DEFAULT_BACKOFF_SUPPLIER = BackoffSupplier.newBackoffBuilder().build()
+val DEFAULT_BACKOFF_SUPPLIER = JobWorkerBuilderImpl.DEFAULT_BACKOFF_SUPPLIER
 private val DEADLINE_OFFSET = 10.seconds
 
 class JobCoworkerBuilder(
