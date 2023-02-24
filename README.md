@@ -97,6 +97,42 @@ If you are using the Spring Boot Starter, you need just to create a bean with th
     }
 ```
 
+### Custom error handling
+
+Sometimes, you want to override the default error handling mechanism. To do so, you need to customize your worker like this:
+
+```kotlin
+        client.toCozeebe().newCoWorker(jobType) { job: ActivatedJob, jobClient: JobClient ->
+            // worker's logic
+        }
+            .also {
+                // override job error handler
+                it.jobErrorHandler = JobErrorHandler { e, activatedJob, jobClient ->
+                    if (e is IgnorableException) {
+                        jobClient.newCompleteCommand(activatedJob).variables(mapOf("ignored" to true)).send().await()
+                    } else {
+                        jobClient.newFailCommand(activatedJob).retries(activatedJob.retries - 1).send().await()
+                    }
+                }
+            }
+```
+
+#### Error handling in Spring Boot
+
+If you are using the Spring Boot Starter, you need to define a `JobErrorHandler` bean in your context:
+```kotlin
+        @Bean
+        open fun customErrorHandler(): JobErrorHandler {
+            val defaultErrorHandler = DefaultSpringZeebeErrorHandler()
+            return JobErrorHandler { e, activatedJob, jobClient ->
+                logger.error(e) { "Got error: ${e.message}, on job: $activatedJob" }
+                defaultErrorHandler.handleError(e, activatedJob, jobClient)
+            }
+        }
+```
+
+**Warning**: It is highly recommend to use the `DefaultSpringZeebeErrorHandler` wrapper to wrap your error handling logic. More info in: https://github.com/camunda-community-hub/kotlin-coworker/issues/54
+
 ## Missing Features
 
 * Coroutines native `JobClient`

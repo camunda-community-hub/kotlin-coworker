@@ -7,11 +7,13 @@ import io.camunda.zeebe.spring.client.bean.ParameterInfo
 import org.camunda.community.extension.coworker.Cozeebe
 import org.camunda.community.extension.coworker.zeebe.worker.JobCoroutineContextProvider
 import org.camunda.community.extension.coworker.zeebe.worker.builder.JobCoworkerBuilder
+import org.camunda.community.extension.coworker.zeebe.worker.handler.error.JobErrorHandler
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 
 class CoworkerManager(
-    private val jobCoroutineContextProvider: JobCoroutineContextProvider?
+    private val jobCoroutineContextProvider: JobCoroutineContextProvider,
+    private val jobErrorHandler: JobErrorHandler
 ) {
 
     private val openedWorkers: MutableList<JobWorker> = mutableListOf()
@@ -23,9 +25,8 @@ class CoworkerManager(
                 coworkerValue.methodInfo.invoke(*(args.toTypedArray()))
             }
         }.also { builder: JobCoworkerBuilder ->
-            jobCoroutineContextProvider?.let {
-                builder.additionalCoroutineContextProvider = it
-            }
+            builder.additionalCoroutineContextProvider = jobCoroutineContextProvider
+            builder.jobErrorHandler = jobErrorHandler
         }
         val worker = coWorker.open()
         openedWorkers.add(worker)

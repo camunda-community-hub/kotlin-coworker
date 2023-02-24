@@ -46,6 +46,10 @@
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-kotlin</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

@@ -12,6 +12,7 @@ import mu.KLogging
 import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.Awaitility
 import org.camunda.community.extension.coworker.zeebe.worker.JobCoroutineContextProvider
+import org.camunda.community.extension.coworker.zeebe.worker.handler.error.JobErrorHandler
 import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.util.LinkedList
@@ -94,6 +95,41 @@ class JobCoworkerIntegrationTest {
     }
 
     @Test
+    fun `should work with custom error handler`() {
+        // given
+        val jobType = "customErrorHandler"
+        val simpleProcess = Bpmn
+            .createExecutableProcess()
+            .startEvent()
+            .serviceTask("custom-error-handler")
+            .zeebeJobType(jobType)
+            .endEvent()
+            .done()
+
+        val deploymentEvent =
+            client.newDeployResourceCommand().addProcessModel(simpleProcess, "process.bpmn").send().join()
+
+        client.toCozeebe().newCoWorker(jobType) { _, _ ->
+            throw IgnorableException()
+        }
+            .also {
+                it.jobErrorHandler = JobErrorHandler { e, activatedJob, jobClient ->
+                    if (e is IgnorableException) {
+                        jobClient.newCompleteCommand(activatedJob).variables(mapOf("ignored" to true)).send().await()
+                    } else {
+                        jobClient.newFailCommand(activatedJob).retries(activatedJob.retries - 1).send().await()
+                    }
+                }
+            }
+            .open().use {
+                val instanceResult = client.newCreateInstanceCommand()
+                    .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
+                    .withResult().requestTimeout(Duration.ofMinutes(1)).send().join()
+                BpmnAssert.assertThat(instanceResult).isCompleted
+            }
+    }
+
+    @Test
     fun `should retry and throw an error by default if exception occurred while handling the job`() {
         // given
         val jobType = "defaultErrorHandler"
@@ -152,6 +188,8 @@ class JobCoworkerIntegrationTest {
     class TestCoroutineContext : AbstractCoroutineContextElement(Key) {
         companion object Key : CoroutineContext.Key<TestCoroutineContext>
     }
+
+    class IgnorableException : Exception()
 
     companion object : KLogging()
 }

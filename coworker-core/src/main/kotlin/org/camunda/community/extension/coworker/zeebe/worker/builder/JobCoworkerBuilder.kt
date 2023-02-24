@@ -18,6 +18,8 @@ import org.camunda.community.extension.coworker.zeebe.worker.JobCoworker
 import org.camunda.community.extension.coworker.zeebe.worker.JobPoller
 import org.camunda.community.extension.coworker.zeebe.worker.handler.JobExecutableFactory
 import org.camunda.community.extension.coworker.zeebe.worker.handler.JobHandler
+import org.camunda.community.extension.coworker.zeebe.worker.handler.error.JobErrorHandler
+import org.camunda.community.extension.coworker.zeebe.worker.handler.error.impl.DefaultJobErrorHandler
 import java.io.Closeable
 import java.util.concurrent.ScheduledExecutorService
 import kotlin.time.Duration
@@ -44,7 +46,8 @@ class JobCoworkerBuilder(
     var requestTimeout: Duration = configuration.defaultRequestTimeout.toKotlinDuration(),
     var fetchVariables: List<String>? = null,
     var backoffSupplier: BackoffSupplier = DEFAULT_BACKOFF_SUPPLIER,
-    var additionalCoroutineContextProvider: JobCoroutineContextProvider = JobCoroutineContextProvider { _: ActivatedJob -> MDCContext() }
+    var additionalCoroutineContextProvider: JobCoroutineContextProvider = JobCoroutineContextProvider { _: ActivatedJob -> MDCContext() },
+    var jobErrorHandler: JobErrorHandler = DefaultJobErrorHandler()
 ) {
 
     private fun checkPreconditions() {
@@ -66,7 +69,7 @@ class JobCoworkerBuilder(
             requestBuilder.addAllFetchVariable(it)
         }
         val deadline = requestTimeout.plus(DEADLINE_OFFSET)
-        val jobExecutableFactory = JobExecutableFactory(jobClient, jobHandler)
+        val jobExecutableFactory = JobExecutableFactory(jobClient, jobHandler, jobErrorHandler)
         val jobPoller = JobPoller(
             gatewayStubKt = gatewayStub,
             requestBuilder = requestBuilder,

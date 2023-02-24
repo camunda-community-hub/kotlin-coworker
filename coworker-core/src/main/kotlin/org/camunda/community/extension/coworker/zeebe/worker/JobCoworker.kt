@@ -16,7 +16,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.ExperimentalTime
 
 /**
  * Port of [io.camunda.zeebe.client.impl.worker.JobWorkerImpl] but with Kotlin coroutines
@@ -56,7 +55,6 @@ class JobCoworker(
         acquiringJobs.set(false)
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun schedulePoll() {
         if (isPollScheduled.compareAndSet(false, true)) {
             CoroutineScope(scheduledCoroutineContext).launch {
