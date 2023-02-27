@@ -1,8 +1,15 @@
 package org.camunda.community.extension.coworker.spring.annotation
 
+import io.camunda.zeebe.client.api.JsonMapper
 import io.camunda.zeebe.client.api.response.ActivatedJob
 import io.camunda.zeebe.client.api.worker.JobClient
 import io.camunda.zeebe.client.api.worker.JobWorker
+import io.camunda.zeebe.spring.client.annotation.CustomHeaders
+import io.camunda.zeebe.spring.client.annotation.Variable
+import io.camunda.zeebe.spring.client.annotation.VariablesAsType
+import io.camunda.zeebe.spring.client.annotation.ZeebeCustomHeaders
+import io.camunda.zeebe.spring.client.annotation.ZeebeVariable
+import io.camunda.zeebe.spring.client.annotation.ZeebeVariablesAsType
 import io.camunda.zeebe.spring.client.bean.ParameterInfo
 import org.camunda.community.extension.coworker.Cozeebe
 import org.camunda.community.extension.coworker.zeebe.worker.JobCoroutineContextProvider
@@ -13,7 +20,8 @@ import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 
 class CoworkerManager(
     private val jobCoroutineContextProvider: JobCoroutineContextProvider,
-    private val jobErrorHandler: JobErrorHandler
+    private val jobErrorHandler: JobErrorHandler,
+    private val jsonMapper: JsonMapper
 ) {
 
     private val openedWorkers: MutableList<JobWorker> = mutableListOf()
@@ -27,6 +35,12 @@ class CoworkerManager(
         }.also { builder: JobCoworkerBuilder ->
             builder.additionalCoroutineContextProvider = jobCoroutineContextProvider
             builder.jobErrorHandler = jobErrorHandler
+            builder.workerName = coworkerValue.name
+            builder.timeout = coworkerValue.timeout
+            builder.maxJobsActive = coworkerValue.maxJobsActive
+            builder.requestTimeout = coworkerValue.requestTimeout
+            builder.pollInterval = coworkerValue.pollInterval
+            builder.fetchVariables = coworkerValue.fetchVariables
         }
         val worker = coWorker.open()
         openedWorkers.add(worker)
@@ -37,9 +51,9 @@ class CoworkerManager(
         activatedJob: ActivatedJob,
         continuation: Continuation<Any>,
         parameters: List<ParameterInfo>
-    ): List<Any> = parameters
-        .flatMap {
-            val paramType = it.parameterInfo.type
+    ): List<Any> = parameters.flatMap {
+            val parameterInfo = it.parameterInfo
+            val paramType = parameterInfo.type
             val args = mutableListOf<Any>()
             if (JobClient::class.java.isAssignableFrom(paramType)) {
                 args.add(jobClient)
@@ -47,6 +61,27 @@ class CoworkerManager(
                 args.add(activatedJob)
             } else if (Continuation::class.java.isAssignableFrom(paramType)) {
                 args.add(continuation)
+            } else if (parameterInfo.isAnnotationPresent(Variable::class.java) || parameterInfo.isAnnotationPresent(
+                    ZeebeVariable::class.java
+                )
+            ) {
+                val variable = activatedJob.variablesAsMap[it.parameterName]
+                val arg = if (variable != null && !paramType.isInstance(variable)) {
+                    jsonMapper.fromJson(jsonMapper.toJson(variable), paramType)
+                } else {
+                    paramType.cast(variable)
+                }
+                args.add(arg)
+            } else if (parameterInfo.isAnnotationPresent(VariablesAsType::class.java) || parameterInfo.isAnnotationPresent(
+                    ZeebeVariablesAsType::class.java
+                )
+            ) {
+                args.add(activatedJob.getVariablesAsType(paramType))
+            } else if (parameterInfo.isAnnotationPresent(CustomHeaders::class.java) || parameterInfo.isAnnotationPresent(
+                    ZeebeCustomHeaders::class.java
+                )
+            ) {
+                args.add(activatedJob.customHeaders)
             }
             args
         }

@@ -3,14 +3,14 @@ package org.camunda.community.extension.coworker.spring.annotation
 import io.camunda.zeebe.client.ZeebeClient
 import io.camunda.zeebe.spring.client.annotation.processor.AbstractZeebeAnnotationProcessor
 import io.camunda.zeebe.spring.client.bean.ClassInfo
-import io.camunda.zeebe.spring.client.bean.MethodInfo
+import org.camunda.community.extension.coworker.spring.annotation.mapper.MethodToCoworkerMapper
 import org.camunda.community.extension.coworker.toCozeebe
 import org.springframework.util.ReflectionUtils
 import kotlin.coroutines.Continuation
-import kotlin.jvm.optionals.getOrNull
 
 class CoworkerAnnotationProcessor(
-    private val coworkerManager: CoworkerManager
+    private val coworkerManager: CoworkerManager,
+    private val methodToCoworkerMapper: MethodToCoworkerMapper
 ) : AbstractZeebeAnnotationProcessor() {
 
     private val coworkerValues: MutableList<CoworkerValue> = mutableListOf()
@@ -21,10 +21,10 @@ class CoworkerAnnotationProcessor(
     override fun configureFor(classInfo: ClassInfo) {
         ReflectionUtils.doWithMethods(
             classInfo.targetClass,
-            { method -> readFromMethodInfo(classInfo.toMethodInfo(method))?.let { coworkerValues.add(it) } },
+            { method -> methodToCoworkerMapper.map(classInfo, method)?.let { coworkerValues.add(it) } },
             ReflectionUtils.USER_DECLARED_METHODS
-                .and {
-                        method -> method.parameterTypes.contains(Continuation::class.java)
+                .and { method ->
+                    method.parameterTypes.contains(Continuation::class.java)
                 }
         )
     }
@@ -32,6 +32,8 @@ class CoworkerAnnotationProcessor(
     override fun start(zeebeClient: ZeebeClient) {
         val cozeebe = zeebeClient.toCozeebe()
         coworkerValues
+            .asSequence()
+            .filter(CoworkerValue::enabled)
             .forEach {
                 coworkerManager.openWorker(it, cozeebe)
             }
@@ -41,15 +43,4 @@ class CoworkerAnnotationProcessor(
         coworkerManager.closeAllWorkers()
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun readFromMethodInfo(method: MethodInfo): CoworkerValue? {
-        return method.getAnnotation(Coworker::class.java)
-            .map {
-                CoworkerValue(
-                    type = it.type,
-                    methodInfo = method
-                )
-            }
-            .getOrNull()
-    }
 }

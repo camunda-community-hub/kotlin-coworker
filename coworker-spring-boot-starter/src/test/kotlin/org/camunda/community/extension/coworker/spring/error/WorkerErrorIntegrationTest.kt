@@ -6,6 +6,7 @@ import io.camunda.zeebe.client.api.response.ActivatedJob
 import io.camunda.zeebe.client.api.worker.JobClient
 import io.camunda.zeebe.model.bpmn.Bpmn
 import io.camunda.zeebe.process.test.assertions.BpmnAssert
+import io.camunda.zeebe.spring.client.config.ZeebeClientStarterAutoConfiguration
 import io.camunda.zeebe.spring.test.ZeebeSpringTest
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -16,10 +17,17 @@ import org.camunda.community.extension.coworker.spring.annotation.Coworker
 import org.camunda.community.extension.coworker.zeebe.worker.handler.error.JobErrorHandler
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 
 @ZeebeSpringTest
-@SpringBootTest(classes = [CoworkerAutoConfiguration::class, WorkerErrorIntegrationTest::class])
+@SpringBootTest(classes = [
+    JacksonAutoConfiguration::class,
+    ZeebeClientStarterAutoConfiguration::class,
+    CoworkerAutoConfiguration::class,
+    CoworkerAutoConfiguration::class,
+    WorkerErrorIntegrationTest::class
+])
 class WorkerErrorIntegrationTest {
 
     @SpykBean

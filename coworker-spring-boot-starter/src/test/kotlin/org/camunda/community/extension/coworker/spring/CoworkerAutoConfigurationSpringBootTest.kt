@@ -1,6 +1,7 @@
 package org.camunda.community.extension.coworker.spring
 
 import io.camunda.zeebe.client.api.response.ActivatedJob
+import io.camunda.zeebe.spring.client.config.ZeebeClientStarterAutoConfiguration
 import io.camunda.zeebe.spring.test.ZeebeSpringTest
 import kotlinx.coroutines.slf4j.MDCContext
 import mu.KLogging
@@ -13,13 +14,19 @@ import org.camunda.community.extension.coworker.zeebe.worker.handler.error.JobEr
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.getBean
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 
 @ZeebeSpringTest
-@SpringBootTest(classes = [CoworkerAutoConfigurationSpringBootTest.TestZeebeConfiguration::class, CoworkerAutoConfiguration::class])
+@SpringBootTest(classes = [
+    JacksonAutoConfiguration::class,
+    ZeebeClientStarterAutoConfiguration::class,
+    CoworkerAutoConfigurationSpringBootTest.TestZeebeConfiguration::class,
+    CoworkerAutoConfiguration::class
+])
 class CoworkerAutoConfigurationSpringBootTest {
 
     @Autowired

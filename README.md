@@ -133,6 +133,14 @@ If you are using the Spring Boot Starter, you need to define a `JobErrorHandler`
 
 **Warning**: It is highly recommend to use the `DefaultSpringZeebeErrorHandler` wrapper to wrap your error handling logic. More info in: https://github.com/camunda-community-hub/kotlin-coworker/issues/54
 
+### Annotation parameters
+
+If you want to redefine `org.camunda.community.extension.coworker.spring.annotation.Coworker` parameters, you should use [SPeL](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#expressions) to define annotation values.
+See the property's JavaDoc for the type that should be resolved.
+Also, you may use property placeholders (`${}`) in the annotation parameters to replace them with configuration properties if needed.
+
+As an example you may refer to [the test](coworker-spring-boot-starter/src/test/kotlin/org/camunda/community/extension/coworker/spring/property/SpelValuesCoworkerIntegrationTest.kt).
+
 ## Missing Features
 
 * Coroutines native `JobClient`

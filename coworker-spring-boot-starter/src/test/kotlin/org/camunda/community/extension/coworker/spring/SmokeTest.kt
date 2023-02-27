@@ -5,6 +5,7 @@ import io.camunda.zeebe.client.api.response.ActivatedJob
 import io.camunda.zeebe.client.api.worker.JobClient
 import io.camunda.zeebe.model.bpmn.Bpmn
 import io.camunda.zeebe.process.test.assertions.BpmnAssert.assertThat
+import io.camunda.zeebe.spring.client.config.ZeebeClientStarterAutoConfiguration
 import io.camunda.zeebe.spring.test.ZeebeSpringTest
 import io.camunda.zeebe.spring.test.ZeebeTestThreadSupport
 import kotlinx.coroutines.future.await
@@ -12,11 +13,19 @@ import org.assertj.core.api.Assertions
 import org.camunda.community.extension.coworker.spring.annotation.Coworker
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ZeebeSpringTest
-@SpringBootTest(classes = [CoworkerAutoConfiguration::class, SmokeTest::class])
+@SpringBootTest(
+    classes = [
+        JacksonAutoConfiguration::class,
+        ZeebeClientStarterAutoConfiguration::class,
+        CoworkerAutoConfiguration::class,
+        SmokeTest::class
+    ]
+)
 open class SmokeTest {
 
     private val firstCalled: AtomicBoolean = AtomicBoolean(false)
@@ -43,7 +52,12 @@ open class SmokeTest {
         zeebeClient.newDeployResourceCommand().addProcessModel(testBpmn, "test1.bpmn").send().join()
 
         // when
-        val processInstanceEvent = zeebeClient.newCreateInstanceCommand().bpmnProcessId("test1").latestVersion().send().join()
+        val processInstanceEvent = zeebeClient
+            .newCreateInstanceCommand()
+            .bpmnProcessId("test1")
+            .latestVersion()
+            .send()
+            .join()
 
         // then
         assertThat(processInstanceEvent).isStarted
