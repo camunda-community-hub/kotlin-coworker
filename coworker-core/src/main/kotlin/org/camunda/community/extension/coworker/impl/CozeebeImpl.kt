@@ -40,12 +40,14 @@ class ZeebeCoworkerClientCredentials(private val credentialsProvider: Credential
             }
         }
 
-        try {
-            val headers = Metadata()
-            credentialsProvider.applyCredentials(headers)
-            applier.apply(headers)
-        } catch (e: IOException) {
-            applier.fail(Status.CANCELLED.withCause(e))
+        val headers = Metadata()
+        appExecutor.execute {
+            try {
+                credentialsProvider.applyCredentials(headers)
+                applier.apply(headers)
+            } catch (e: IOException) {
+                applier.fail(Status.CANCELLED.withCause(e))
+            }
         }
     }
 
