@@ -4,7 +4,6 @@ import io.camunda.zeebe.client.ZeebeClientConfiguration
 import io.camunda.zeebe.client.api.JsonMapper
 import io.camunda.zeebe.client.api.worker.BackoffSupplier
 import io.camunda.zeebe.client.api.worker.JobClient
-import io.camunda.zeebe.client.api.worker.JobWorker
 import io.camunda.zeebe.client.impl.command.ArgumentUtil.ensureGreaterThan
 import io.camunda.zeebe.client.impl.command.ArgumentUtil.ensureNotNullNorEmpty
 import io.camunda.zeebe.client.impl.worker.JobWorkerBuilderImpl
@@ -51,7 +50,7 @@ class JobCoworkerBuilder(
         ensureGreaterThan("maxJobsActive", maxJobsActive.toLong(), 0)
     }
 
-    fun open(): JobWorker {
+    fun open(): JobCoworker {
         checkPreconditions()
         val requestBuilder = GatewayOuterClass.ActivateJobsRequest.newBuilder()
             .setType(jobType)
