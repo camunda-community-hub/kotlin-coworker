@@ -1,7 +1,6 @@
 package org.camunda.community.extension.coworker.spring.annotation.customization.impl
 
 import io.camunda.zeebe.spring.client.properties.ZeebeClientConfigurationProperties
-import org.camunda.community.extension.coworker.spring.annotation.Coworker
 import org.camunda.community.extension.coworker.spring.annotation.CoworkerValue
 import org.camunda.community.extension.coworker.spring.annotation.customization.CoworkerValueCustomizer
 import kotlin.time.Duration.Companion.milliseconds

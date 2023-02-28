@@ -19,7 +19,6 @@ import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
 import java.math.BigDecimal
-import java.util.function.Consumer
 
 @ZeebeSpringTest
 @SpringBootTest(
