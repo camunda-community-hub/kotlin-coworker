@@ -133,6 +133,17 @@ If you are using the Spring Boot Starter, you need to define a `JobErrorHandler`
 
 **Warning**: It is highly recommend to use the `DefaultSpringZeebeErrorHandler` wrapper to wrap your error handling logic. More info in: https://github.com/camunda-community-hub/kotlin-coworker/issues/54
 
+### Override annotation parameters via configuration properties
+
+This works basically [the same as in the Spring Zeebe project](https://github.com/camunda-community-hub/spring-zeebe#overriding-jobworker-values-via-configuration-file).
+So, you can override values in the `@Coworker` annotation with type foo like this:
+```properties
+zeebe.client.worker.override.foo.enabled=false
+```
+
+*Note*: you can't use the SpEL and properties placeholders in this value. You should return the same type in the `@Coworker` annotation.
+The exception is `Duration`. You should return `Long` values in milliseconds.
+
 ### Annotation parameters
 
 If you want to redefine `org.camunda.community.extension.coworker.spring.annotation.Coworker` parameters, you should use [SPeL](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#expressions) to define annotation values.

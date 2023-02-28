@@ -3,6 +3,7 @@ package org.camunda.community.extension.coworker.spring.annotation
 import io.camunda.zeebe.client.ZeebeClient
 import io.camunda.zeebe.spring.client.annotation.processor.AbstractZeebeAnnotationProcessor
 import io.camunda.zeebe.spring.client.bean.ClassInfo
+import org.camunda.community.extension.coworker.spring.annotation.customization.CoworkerValueCustomizer
 import org.camunda.community.extension.coworker.spring.annotation.mapper.MethodToCoworkerMapper
 import org.camunda.community.extension.coworker.toCozeebe
 import org.springframework.util.ReflectionUtils
@@ -10,7 +11,8 @@ import kotlin.coroutines.Continuation
 
 class CoworkerAnnotationProcessor(
     private val coworkerManager: CoworkerManager,
-    private val methodToCoworkerMapper: MethodToCoworkerMapper
+    private val methodToCoworkerMapper: MethodToCoworkerMapper,
+    private val coworkerValueCustomizers: List<CoworkerValueCustomizer>
 ) : AbstractZeebeAnnotationProcessor() {
 
     private val coworkerValues: MutableList<CoworkerValue> = mutableListOf()
@@ -33,6 +35,7 @@ class CoworkerAnnotationProcessor(
         val cozeebe = zeebeClient.toCozeebe()
         coworkerValues
             .asSequence()
+            .onEach { coworkerValue -> coworkerValueCustomizers.forEach { it.customize(coworkerValue) } }
             .filter(CoworkerValue::enabled)
             .forEach {
                 coworkerManager.openWorker(it, cozeebe)

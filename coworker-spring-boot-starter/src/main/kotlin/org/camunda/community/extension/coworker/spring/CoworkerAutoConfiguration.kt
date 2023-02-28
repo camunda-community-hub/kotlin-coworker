@@ -8,10 +8,13 @@ import io.camunda.zeebe.spring.client.ZeebeClientSpringConfiguration
 import io.camunda.zeebe.spring.client.annotation.processor.AbstractZeebeAnnotationProcessor
 import io.camunda.zeebe.spring.client.annotation.processor.AnnotationProcessorConfiguration
 import io.camunda.zeebe.spring.client.config.ZeebeClientStarterAutoConfiguration
+import io.camunda.zeebe.spring.client.properties.ZeebeClientConfigurationProperties
 import kotlinx.coroutines.slf4j.MDCContext
 import org.camunda.community.extension.coworker.Cozeebe
 import org.camunda.community.extension.coworker.spring.annotation.CoworkerAnnotationProcessor
 import org.camunda.community.extension.coworker.spring.annotation.CoworkerManager
+import org.camunda.community.extension.coworker.spring.annotation.customization.CoworkerValueCustomizer
+import org.camunda.community.extension.coworker.spring.annotation.customization.impl.PropertyBasedCoworkerCustomizer
 import org.camunda.community.extension.coworker.spring.annotation.evaluation.AnnotationValueEvaluator
 import org.camunda.community.extension.coworker.spring.annotation.evaluation.impl.SpringContextSpelAnnotationValueEvaluator
 import org.camunda.community.extension.coworker.spring.annotation.mapper.CoworkerToCoworkerValueMapper
@@ -50,7 +53,8 @@ open class CoworkerAutoConfiguration {
 
     @ConditionalOnMissingBean
     @Bean
-    open fun defaultJobCoroutineContextProvider(): JobCoroutineContextProvider = JobCoroutineContextProvider { _ -> MDCContext() }
+    open fun defaultJobCoroutineContextProvider(): JobCoroutineContextProvider =
+        JobCoroutineContextProvider { _ -> MDCContext() }
 
     @ConditionalOnMissingBean
     @Bean
@@ -86,11 +90,18 @@ open class CoworkerAutoConfiguration {
     )
 
     @Bean
+    open fun propertyBasedCoworkerCustomizer(
+        zeebeClientConfigurationProperties: ZeebeClientConfigurationProperties
+    ): CoworkerValueCustomizer = PropertyBasedCoworkerCustomizer(zeebeClientConfigurationProperties)
+
+    @Bean
     open fun coworkerAnnotationProcessor(
         coworkerManager: CoworkerManager,
-        methodToCoworkerMapper: MethodToCoworkerMapper
+        methodToCoworkerMapper: MethodToCoworkerMapper,
+        coworkerValueCustomizers: List<CoworkerValueCustomizer>
     ): AbstractZeebeAnnotationProcessor = CoworkerAnnotationProcessor(
         coworkerManager,
-        methodToCoworkerMapper
+        methodToCoworkerMapper,
+        coworkerValueCustomizers
     )
 }
