@@ -5,6 +5,21 @@
 
 This project aims to provide a neat Kotlin Coroutines API to Zeebe Gateway. Right now there is just a worker coroutine API.
 
+## Motivation
+
+I decided to create it in trying to gain all performance that I can gain using Kotlin Coroutines stack.
+So, if you replace blocking calls with Coroutines suspension you can take more jobs in parallel, instead of one (in Zeebe Client Java default settings).
+
+You can see [the performance comparison test for yourself](benchmark/src/test/kotlin/org/camunda/community/extension/coworker/CoworkerVsJobWorkerPerformanceComparisonTest.kt), but in my machine, the numbers are next:
+```
+For Zeebe Client it took 41.186149961s to process 40
+...
+For Coworker it took 1.522231647s to process 40
+So, Zeebe Client Java duration / Coworker duration = 27.056427346106805
+```
+
+So, the same worker with delay, but in the reactive stack takes in **27 times less** time to complete process instances.
+
 ## Usage
 
 * Add the dependency
