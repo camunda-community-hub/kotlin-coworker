@@ -87,6 +87,7 @@
         <executions>
           <execution>
             <id>compile</id>
+            <phase>generate-sources</phase>
             <goals>
               <goal>compile</goal>
               <goal>compile-custom</goal>
@@ -109,6 +110,7 @@
           </execution>
           <execution>
             <id>compile-kt</id>
+            <phase>generate-sources</phase>
             <goals>
               <goal>compile-custom</goal>
             </goals>
@@ -116,6 +118,28 @@
               <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
               <outputDirectory>${project.build.directory}/generated-sources/protobuf/kotlin</outputDirectory>
               <pluginId>kotlin</pluginId>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <!--
+            Add GRPC generated files as a source dir
+            -->
+            <id>add-grpc-generated-as-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration combine.children="append" combine.self="append">
+              <sources>
+                <source>${project.build.directory}/generated-sources/protobuf/kotlin</source>
+              </sources>
             </configuration>
           </execution>
         </executions>

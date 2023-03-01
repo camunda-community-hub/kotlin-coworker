@@ -12,17 +12,15 @@ import io.camunda.zeebe.client.impl.worker.JobClientImpl
 import io.camunda.zeebe.gateway.protocol.GatewayGrpc.GatewayStub
 import io.camunda.zeebe.gateway.protocol.GatewayGrpcKt
 import io.grpc.CallCredentials
+import io.grpc.CallOptions
+import io.grpc.ClientInterceptors
 import io.grpc.ManagedChannel
-import io.grpc.Metadata
-import io.grpc.SecurityLevel
-import io.grpc.Status
-import mu.KLogging
 import org.camunda.community.extension.coworker.Cozeebe
+import org.camunda.community.extension.coworker.credentials.ZeebeCoworkerClientCredentials
 import org.camunda.community.extension.coworker.zeebe.worker.builder.JobCoworkerBuilder
 import org.camunda.community.extension.coworker.zeebe.worker.handler.JobHandler
 import java.io.Closeable
 import java.io.IOException
-import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -32,48 +30,18 @@ fun ZeebeClientConfiguration.buildCallCredentials(): CallCredentials? {
     return ZeebeCoworkerClientCredentials(customCredentialsProvider)
 }
 
-class ZeebeCoworkerClientCredentials(private val credentialsProvider: CredentialsProvider) : CallCredentials() {
-    override fun applyRequestMetadata(requestInfo: RequestInfo, appExecutor: Executor, applier: MetadataApplier) {
-        if (requestInfo.securityLevel.ordinal < SecurityLevel.PRIVACY_AND_INTEGRITY.ordinal) {
-            logger.warn {
-                "The request's security level does not guarantee that the credentials will be confidential."
-            }
-        }
-
-        val headers = Metadata()
-        appExecutor.execute {
-            try {
-                credentialsProvider.applyCredentials(headers)
-                applier.apply(headers)
-            } catch (e: IOException) {
-                applier.fail(Status.CANCELLED.withCause(e))
-            }
-        }
-    }
-
-    override fun thisUsesUnstableApi() = Unit
-
-    companion object : KLogging()
-}
-
 fun ZeebeClientConfiguration.buildGatewayCoroutineStub(
     channel: ManagedChannel
-): GatewayGrpcKt.GatewayCoroutineStub = GatewayGrpcKt
-    .GatewayCoroutineStub(channel)
-    .let {
-        val callCredentials = this.buildCallCredentials()
-        if (callCredentials != null) {
-            it.withCallCredentials(callCredentials)
-        }
-        it
-    }
-    .let {
-        val interceptors = this.interceptors
-        if (interceptors.isNotEmpty()) {
-            it.withInterceptors(*interceptors.toTypedArray())
-        }
-        it
-    }
+): GatewayGrpcKt.GatewayCoroutineStub {
+    val callOptions = this.buildCallCredentials()?.let {
+        CallOptions.DEFAULT.withCallCredentials(it)
+    } ?: CallOptions.DEFAULT
+    return GatewayGrpcKt
+        .GatewayCoroutineStub(
+            ClientInterceptors.intercept(channel, interceptors),
+            callOptions
+        )
+}
 
 fun ZeebeClientConfiguration.buildExecutorService(): ScheduledExecutorService =
     Executors.newScheduledThreadPool(this.numJobWorkerExecutionThreads)
