@@ -8,6 +8,8 @@ import io.camunda.zeebe.spring.client.ZeebeClientSpringConfiguration
 import io.camunda.zeebe.spring.client.annotation.processor.AbstractZeebeAnnotationProcessor
 import io.camunda.zeebe.spring.client.annotation.processor.AnnotationProcessorConfiguration
 import io.camunda.zeebe.spring.client.config.ZeebeClientStarterAutoConfiguration
+import io.camunda.zeebe.spring.client.metrics.DefaultNoopMetricsRecorder
+import io.camunda.zeebe.spring.client.metrics.MetricsRecorder
 import io.camunda.zeebe.spring.client.properties.ZeebeClientConfigurationProperties
 import kotlinx.coroutines.slf4j.MDCContext
 import org.camunda.community.extension.coworker.Cozeebe
@@ -60,15 +62,21 @@ open class CoworkerAutoConfiguration {
     @Bean
     open fun jsonMapper(objectMapper: ObjectMapper): JsonMapper = ZeebeObjectMapper(objectMapper)
 
+    @ConditionalOnMissingBean
+    @Bean
+    open fun metricsRecorder(): MetricsRecorder = DefaultNoopMetricsRecorder()
+
     @Bean
     open fun coworkerManager(
         jobCoroutineContextProvider: JobCoroutineContextProvider,
         jobErrorHandler: JobErrorHandler,
-        jsonMapper: JsonMapper
+        jsonMapper: JsonMapper,
+        metricsRecorder: MetricsRecorder
     ): CoworkerManager = CoworkerManager(
         jobCoroutineContextProvider,
         jobErrorHandler,
-        jsonMapper
+        jsonMapper,
+        metricsRecorder
     )
 
     @Bean

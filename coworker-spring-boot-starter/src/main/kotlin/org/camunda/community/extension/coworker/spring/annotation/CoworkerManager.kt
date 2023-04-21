@@ -11,6 +11,7 @@ import io.camunda.zeebe.spring.client.annotation.ZeebeCustomHeaders
 import io.camunda.zeebe.spring.client.annotation.ZeebeVariable
 import io.camunda.zeebe.spring.client.annotation.ZeebeVariablesAsType
 import io.camunda.zeebe.spring.client.bean.ParameterInfo
+import io.camunda.zeebe.spring.client.metrics.MetricsRecorder
 import org.camunda.community.extension.coworker.Cozeebe
 import org.camunda.community.extension.coworker.zeebe.worker.JobCoroutineContextProvider
 import org.camunda.community.extension.coworker.zeebe.worker.builder.JobCoworkerBuilder
@@ -21,7 +22,8 @@ import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 class CoworkerManager(
     private val jobCoroutineContextProvider: JobCoroutineContextProvider,
     private val jobErrorHandler: JobErrorHandler,
-    private val jsonMapper: JsonMapper
+    private val jsonMapper: JsonMapper,
+    private val metricsRecorder: MetricsRecorder
 ) {
 
     private val openedWorkers: MutableList<JobWorker> = mutableListOf()
@@ -30,7 +32,13 @@ class CoworkerManager(
         val coWorker = cozeebe.newCoWorker(coworkerValue.type) { client, job ->
             suspendCoroutineUninterceptedOrReturn { it: Continuation<Any> ->
                 val args = createArguments(client, job, it, coworkerValue.methodInfo.parameters)
-                coworkerValue.methodInfo.invoke(*(args.toTypedArray()))
+                try {
+                    metricsRecorder.increase(MetricsRecorder.METRIC_NAME_JOB, MetricsRecorder.ACTION_ACTIVATED, job.type)
+                    coworkerValue.methodInfo.invoke(*(args.toTypedArray()))
+                } catch (ex: Exception) {
+                    metricsRecorder.increase(MetricsRecorder.METRIC_NAME_JOB, MetricsRecorder.ACTION_FAILED, job.type)
+                    throw ex
+                }
             }
         }.also { builder: JobCoworkerBuilder ->
             builder.additionalCoroutineContextProvider = jobCoroutineContextProvider

@@ -168,6 +168,16 @@ Also, you may use property placeholders (`${}`) in the annotation parameters to 
 
 As an example you may refer to [the test](coworker-spring-boot-starter/src/test/kotlin/org/camunda/community/extension/coworker/spring/property/SpelValuesCoworkerIntegrationTest.kt).
 
+### Metrics
+
+If you want to observe your coworkers, there is a port of some metrics from the Spring Zeebe project in the Coworker's Spring Boot Starter:
+1. `camunda.job.invocations`
+   1. It supports the following tags:
+      1. `action` - what happens to a job
+         1. `activated` - The job was activated and started to process an item
+         2. `failed` - The processing failed with some exception
+      2. `type` - job's type
+
 ## Missing Features
 
 * Coroutines native `JobClient`
