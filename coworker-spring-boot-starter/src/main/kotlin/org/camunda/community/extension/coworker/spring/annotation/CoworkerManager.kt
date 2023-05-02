@@ -32,13 +32,8 @@ class CoworkerManager(
         val coWorker = cozeebe.newCoWorker(coworkerValue.type) { client, job ->
             suspendCoroutineUninterceptedOrReturn { it: Continuation<Any> ->
                 val args = createArguments(client, job, it, coworkerValue.methodInfo.parameters)
-                try {
-                    metricsRecorder.increase(MetricsRecorder.METRIC_NAME_JOB, MetricsRecorder.ACTION_ACTIVATED, job.type)
-                    coworkerValue.methodInfo.invoke(*(args.toTypedArray()))
-                } catch (ex: Exception) {
-                    metricsRecorder.increase(MetricsRecorder.METRIC_NAME_JOB, MetricsRecorder.ACTION_FAILED, job.type)
-                    throw ex
-                }
+                metricsRecorder.increase(MetricsRecorder.METRIC_NAME_JOB, MetricsRecorder.ACTION_ACTIVATED, job.type)
+                coworkerValue.methodInfo.invoke(*(args.toTypedArray()))
             }
         }.also { builder: JobCoworkerBuilder ->
             builder.additionalCoroutineContextProvider = jobCoroutineContextProvider

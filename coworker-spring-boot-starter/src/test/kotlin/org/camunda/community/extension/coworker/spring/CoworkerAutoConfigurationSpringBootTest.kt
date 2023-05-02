@@ -2,6 +2,7 @@ package org.camunda.community.extension.coworker.spring
 
 import io.camunda.zeebe.client.api.response.ActivatedJob
 import io.camunda.zeebe.spring.client.config.ZeebeClientStarterAutoConfiguration
+import io.camunda.zeebe.spring.client.metrics.DefaultNoopMetricsRecorder
 import io.camunda.zeebe.spring.test.ZeebeSpringTest
 import kotlinx.coroutines.slf4j.MDCContext
 import mu.KLogging
@@ -49,7 +50,7 @@ class CoworkerAutoConfigurationSpringBootTest {
 
         @Bean
         open fun customErrorHandler(): JobErrorHandler {
-            val defaultJobErrorHandler = DefaultSpringZeebeErrorHandler()
+            val defaultJobErrorHandler = DefaultSpringZeebeErrorHandler(metricsRecorder = DefaultNoopMetricsRecorder())
             return JobErrorHandler { e, activatedJob, jobClient ->
                 logger.error(e) { "Got error: ${e.message}, on job: $activatedJob" }
                 defaultJobErrorHandler.handleError(e, activatedJob, jobClient)

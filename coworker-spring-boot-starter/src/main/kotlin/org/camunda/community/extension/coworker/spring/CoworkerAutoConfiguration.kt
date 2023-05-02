@@ -51,7 +51,9 @@ open class CoworkerAutoConfiguration {
 
     @ConditionalOnMissingBean
     @Bean
-    open fun defaultJobErrorHandler(): JobErrorHandler = DefaultSpringZeebeErrorHandler()
+    open fun defaultJobErrorHandler(
+        metricsRecorder: MetricsRecorder
+    ): JobErrorHandler = DefaultSpringZeebeErrorHandler(metricsRecorder = metricsRecorder)
 
     @ConditionalOnMissingBean
     @Bean

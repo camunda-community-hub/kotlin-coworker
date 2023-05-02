@@ -7,6 +7,7 @@ import io.camunda.zeebe.client.api.worker.JobClient
 import io.camunda.zeebe.model.bpmn.Bpmn
 import io.camunda.zeebe.process.test.assertions.BpmnAssert
 import io.camunda.zeebe.spring.client.config.ZeebeClientStarterAutoConfiguration
+import io.camunda.zeebe.spring.client.metrics.DefaultNoopMetricsRecorder
 import io.camunda.zeebe.spring.test.ZeebeSpringTest
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -83,7 +84,7 @@ class WorkerErrorIntegrationTest {
             }
         }
         coEvery { jobErrorHandler.handleError(any(), any(), any()) } coAnswers {
-            DefaultSpringZeebeErrorHandler(mockJobHandler)
+            DefaultSpringZeebeErrorHandler(mockJobHandler, metricsRecorder = DefaultNoopMetricsRecorder())
                 .handleError(
                     it.invocation.args[0] as Exception,
                     it.invocation.args[1] as ActivatedJob,
