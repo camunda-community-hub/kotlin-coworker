@@ -1,31 +1,27 @@
 package org.camunda.community.extension.coworker.zeebe.worker
 
-import io.camunda.zeebe.client.api.JsonMapper
 import io.camunda.zeebe.client.api.response.ActivatedJob
-import io.camunda.zeebe.client.impl.response.ActivatedJobImpl
-import io.camunda.zeebe.gateway.protocol.GatewayGrpcKt
-import io.camunda.zeebe.gateway.protocol.GatewayOuterClass.ActivateJobsRequest.Builder
+import io.camunda.zeebe.client.api.worker.JobClient
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.future.await
 import mu.KLogging
-import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 import kotlin.time.Duration
+import kotlin.time.toJavaDuration
 
 /**
  * Port of [io.camunda.zeebe.client.impl.worker.JobPoller] to Kotlin coroutines
  */
 class JobPoller(
-    private val gatewayStubKt: GatewayGrpcKt.GatewayCoroutineStub,
-    private val requestBuilder: Builder,
-    private val jsonMapper: JsonMapper,
-    private val requestTimeout: Duration,
-    private val retryThrowable: suspend (Throwable) -> Boolean
+    private val jobClient: JobClient,
+    private val type: String,
+    private val timeout: Duration,
+    private val workerName: String,
+    private val fetchVariables: List<String>?,
+    private var maxJobsToActivate: Int,
+    private val retryThrowable: suspend (Throwable) -> Boolean,
 ) {
 
     private lateinit var jobConsumer: suspend (ActivatedJob) -> Unit
@@ -47,7 +43,7 @@ class JobPoller(
     ) {
         reset()
 
-        requestBuilder.maxJobsToActivate = maxJobsToActivate
+        this.maxJobsToActivate = maxJobsToActivate
         this.jobConsumer = jobConsumer
         this.doneCallback = doneCallback
         this.errorCallback = errorCallback
@@ -59,26 +55,37 @@ class JobPoller(
     @OptIn(FlowPreview::class)
     private suspend fun poll() {
         logger.trace {
-            "Polling at max ${requestBuilder.maxJobsToActivate} jobs for worker ${requestBuilder.worker} and job type ${requestBuilder.type}"
+            "Polling at max $maxJobsToActivate jobs for worker $workerName and job type $type"
         }
-        gatewayStubKt
-            .withDeadlineAfter(requestTimeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
-            .activateJobs(requestBuilder.build())
-            .catch {
-                if (retryThrowable(it)) {
-                    poll()
-                } else if (openSupplier()) {
-                    try {
-                        logFailure(it)
-                    } finally {
-                        errorCallback(it)
-                    }
+        val activateJobsCommand = jobClient.newActivateJobsCommand()
+            .jobType(type)
+            .maxJobsToActivate(maxJobsToActivate)
+            .timeout(timeout.toJavaDuration())
+        fetchVariables?.let {
+            activateJobsCommand.fetchVariables(it)
+        }
+        runCatching {
+            activateJobsCommand
+                .send()
+                .await()
+        }.onFailure {
+            if(retryThrowable(it)) {
+                poll()
+            } else if (openSupplier()) {
+                try {
+                    logFailure(it)
+                } finally {
+                    errorCallback(it)
                 }
             }
-            .flatMapConcat { it.jobsList.asFlow() }
-            .map { ActivatedJobImpl(jsonMapper, it) }
-            .collect(jobConsumer)
-            .let { pollingDone() }
+        }.onSuccess {
+            val jobs = it.jobs
+            activatedJobs+= jobs.size
+            jobs.forEach { activatedJob ->
+                jobConsumer(activatedJob)
+            }
+            pollingDone()
+        }
     }
 
     private fun logFailure(throwable: Throwable) {
@@ -88,12 +95,12 @@ class JobPoller(
                 // noisy. Furthermore it is not worth to be a warning since it is expected on a fully
                 // loaded cluster. It should be handled by our backoff mechanism, but if there is an
                 // issue or an configuration mistake the user can turn on trace logging to see this.
-                logger.trace(throwable) { buildErrorMessage(requestBuilder.worker, requestBuilder.type) }
+                logger.trace(throwable) { buildErrorMessage(workerName, type) }
                 return
             }
         }
 
-        logger.warn(throwable) { buildErrorMessage(requestBuilder.worker, requestBuilder.type) }
+        logger.warn(throwable) { buildErrorMessage(workerName, type) }
     }
 
     private fun buildErrorMessage(
@@ -104,11 +111,11 @@ class JobPoller(
     private suspend fun pollingDone() {
         if (activatedJobs > 0) {
             logger.debug {
-                "Activated $activatedJobs jobs for worker ${requestBuilder.worker} and job type ${requestBuilder.type}"
+                "Activated $activatedJobs jobs for worker $workerName and job type $type"
             }
         } else {
             logger.trace {
-                "No jobs activated for worker ${requestBuilder.worker} and job type ${requestBuilder.type}"
+                "No jobs activated for worker $workerName and job type $type"
             }
         }
         doneCallback(activatedJobs)
