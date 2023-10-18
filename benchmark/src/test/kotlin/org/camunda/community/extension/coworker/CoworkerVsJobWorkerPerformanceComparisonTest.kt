@@ -26,7 +26,7 @@ class CoworkerVsJobWorkerPerformanceComparisonTest {
         // Three partitions
         .withEnv("ZEEBE_BROKER_CLUSTER_PARTITIONSCOUNT", "3")
         .withCreateContainerCmdModifier {
-            val oneGigabyte = 1024L * 1024L * 1024L * 1024L
+            val oneGigabyte = 1024L * 1024L * 1024L
             requireNotNull(it.hostConfig)
                 // 1G
                 .withMemory(oneGigabyte)
