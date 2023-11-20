@@ -57,7 +57,7 @@
     <error_prone_annotations.version>2.18.0</error_prone_annotations.version>
     <slf4j.version>2.0.6</slf4j.version>
     <netty.version>4.1.86.Final</netty.version>
-    <guava.version>31.1-jre</guava.version>
+    <guava.version>32.0.0-android</guava.version>
 
     <plugin.version.protobuf-maven-plugin>0.6.1</plugin.version.protobuf-maven-plugin>
     <extension.version.os-maven-plugin>1.7.1</extension.version.os-maven-plugin>
