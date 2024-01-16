@@ -8,10 +8,15 @@ import org.camunda.community.extension.coworker.zeebe.worker.handler.error.JobEr
 import java.io.PrintWriter
 import java.io.StringWriter
 
-class DefaultJobErrorHandler: JobErrorHandler {
-    override suspend fun handleError(e: Exception, activatedJob: ActivatedJob, jobClient: JobClient) {
+class DefaultJobErrorHandler : JobErrorHandler {
+    override suspend fun handleError(
+        e: Exception,
+        activatedJob: ActivatedJob,
+        jobClient: JobClient,
+    ) {
         logger.warn(e) {
-            "Worker ${activatedJob.worker} failed to handle job with key ${activatedJob.key} of type ${activatedJob.type}, sending fail command to broker"
+            "Worker ${activatedJob.worker} failed to handle job with key ${activatedJob.key} of " +
+                "type ${activatedJob.type}, sending fail command to broker"
         }
         val stringWriter = StringWriter()
         val printWriter = PrintWriter(stringWriter)
@@ -25,5 +30,5 @@ class DefaultJobErrorHandler: JobErrorHandler {
             .await()
     }
 
-    companion object: KLogging()
+    companion object : KLogging()
 }

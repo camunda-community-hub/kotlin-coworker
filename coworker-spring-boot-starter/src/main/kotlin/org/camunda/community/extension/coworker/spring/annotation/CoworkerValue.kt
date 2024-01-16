@@ -12,5 +12,5 @@ data class CoworkerValue(
     var requestTimeout: Duration,
     var pollInterval: Duration,
     var fetchVariables: List<String>,
-    var enabled: Boolean
+    var enabled: Boolean,
 )

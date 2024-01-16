@@ -25,9 +25,8 @@ class JobPoller(
     private val requestBuilder: Builder,
     private val jsonMapper: JsonMapper,
     private val requestTimeout: Duration,
-    private val retryThrowable: suspend (Throwable) -> Boolean
+    private val retryThrowable: suspend (Throwable) -> Boolean,
 ) {
-
     private lateinit var jobConsumer: suspend (ActivatedJob) -> Unit
     private lateinit var doneCallback: suspend (Int) -> Unit
     private lateinit var errorCallback: suspend (Throwable) -> Unit
@@ -43,7 +42,7 @@ class JobPoller(
         jobConsumer: suspend (ActivatedJob) -> Unit,
         doneCallback: suspend (Int) -> Unit,
         errorCallback: suspend (Throwable) -> Unit,
-        openSupplier: suspend () -> Boolean
+        openSupplier: suspend () -> Boolean,
     ) {
         reset()
 
@@ -59,7 +58,8 @@ class JobPoller(
     @OptIn(FlowPreview::class)
     private suspend fun poll() {
         logger.trace {
-            "Polling at max ${requestBuilder.maxJobsToActivate} jobs for worker ${requestBuilder.worker} and job type ${requestBuilder.type}"
+            "Polling at max ${requestBuilder.maxJobsToActivate} jobs for worker ${requestBuilder.worker} and " +
+                "job type ${requestBuilder.type}"
         }
         gatewayStubKt
             .withDeadlineAfter(requestTimeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
@@ -98,7 +98,7 @@ class JobPoller(
 
     private fun buildErrorMessage(
         worker: String,
-        type: String
+        type: String,
     ) = "Failed to activate jobs for worker $worker and job type $type"
 
     private suspend fun pollingDone() {

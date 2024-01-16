@@ -8,9 +8,13 @@ import org.camunda.community.extension.coworker.zeebe.worker.handler.error.impl.
 
 class DefaultSpringZeebeErrorHandler(
     private val jobErrorHandler: JobErrorHandler = DefaultJobErrorHandler(),
-    private val metricsRecorder: MetricsRecorder
-): JobErrorHandler {
-    override suspend fun handleError(e: Exception, activatedJob: ActivatedJob, jobClient: JobClient) {
+    private val metricsRecorder: MetricsRecorder,
+) : JobErrorHandler {
+    override suspend fun handleError(
+        e: Exception,
+        activatedJob: ActivatedJob,
+        jobClient: JobClient,
+    ) {
         metricsRecorder.increase(MetricsRecorder.METRIC_NAME_JOB, MetricsRecorder.ACTION_FAILED, activatedJob.type)
         jobErrorHandler.handleError(e.stripSpringZeebeExceptionIfNeeded(), activatedJob, jobClient)
     }

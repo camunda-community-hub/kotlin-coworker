@@ -9,11 +9,13 @@ import java.lang.reflect.Method
 import kotlin.jvm.optionals.getOrNull
 
 class MethodToCoworkerMapperImpl(
-    private val coworkerToCoworkerValueMapper: CoworkerToCoworkerValueMapper
+    private val coworkerToCoworkerValueMapper: CoworkerToCoworkerValueMapper,
 ) : MethodToCoworkerMapper {
-
     @OptIn(ExperimentalStdlibApi::class)
-    override fun map(classInfo: ClassInfo, method: Method): CoworkerValue? {
+    override fun map(
+        classInfo: ClassInfo,
+        method: Method,
+    ): CoworkerValue? {
         return classInfo
             .toMethodInfo(method)
             .getAnnotation(Coworker::class.java)

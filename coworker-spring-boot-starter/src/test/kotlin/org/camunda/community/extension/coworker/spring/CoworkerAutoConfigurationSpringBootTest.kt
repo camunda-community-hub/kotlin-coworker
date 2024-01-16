@@ -22,14 +22,15 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 
 @ZeebeSpringTest
-@SpringBootTest(classes = [
-    JacksonAutoConfiguration::class,
-    ZeebeClientStarterAutoConfiguration::class,
-    CoworkerAutoConfigurationSpringBootTest.TestZeebeConfiguration::class,
-    CoworkerAutoConfiguration::class
-])
+@SpringBootTest(
+    classes = [
+        JacksonAutoConfiguration::class,
+        ZeebeClientStarterAutoConfiguration::class,
+        CoworkerAutoConfigurationSpringBootTest.TestZeebeConfiguration::class,
+        CoworkerAutoConfiguration::class,
+    ],
+)
 class CoworkerAutoConfigurationSpringBootTest {
-
     @Autowired
     private lateinit var applicationContext: ApplicationContext
 
@@ -57,9 +58,9 @@ class CoworkerAutoConfigurationSpringBootTest {
             }
         }
 
-        companion object: KLogging()
+        companion object : KLogging()
 
-        class MyJobCoroutineContextProvider: JobCoroutineContextProvider {
+        class MyJobCoroutineContextProvider : JobCoroutineContextProvider {
             override fun provide(job: ActivatedJob) = MDCContext()
         }
     }

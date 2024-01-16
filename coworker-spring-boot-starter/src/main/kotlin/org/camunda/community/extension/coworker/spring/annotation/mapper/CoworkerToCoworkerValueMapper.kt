@@ -5,6 +5,8 @@ import org.camunda.community.extension.coworker.spring.annotation.Coworker
 import org.camunda.community.extension.coworker.spring.annotation.CoworkerValue
 
 interface CoworkerToCoworkerValueMapper {
-
-    fun map(coworker: Coworker, methodInfo: MethodInfo): CoworkerValue
+    fun map(
+        coworker: Coworker,
+        methodInfo: MethodInfo,
+    ): CoworkerValue
 }

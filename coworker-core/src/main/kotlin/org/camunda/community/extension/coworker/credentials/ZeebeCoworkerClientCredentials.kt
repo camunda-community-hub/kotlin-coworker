@@ -10,9 +10,13 @@ import java.io.IOException
 import java.util.concurrent.Executor
 
 class ZeebeCoworkerClientCredentials(
-    private val credentialsProvider: CredentialsProvider
+    private val credentialsProvider: CredentialsProvider,
 ) : CallCredentials() {
-    override fun applyRequestMetadata(requestInfo: RequestInfo, appExecutor: Executor, applier: MetadataApplier) {
+    override fun applyRequestMetadata(
+        requestInfo: RequestInfo,
+        appExecutor: Executor,
+        applier: MetadataApplier,
+    ) {
         if (requestInfo.securityLevel.ordinal < SecurityLevel.PRIVACY_AND_INTEGRITY.ordinal) {
             logger.warn {
                 "The request's security level does not guarantee that the credentials will be confidential."

@@ -21,46 +21,51 @@ import org.springframework.boot.test.context.SpringBootTest
         JacksonAutoConfiguration::class,
         ZeebeClientStarterAutoConfiguration::class,
         DefaultPropertiesCoworkerIntegrationTest::class,
-        CoworkerAutoConfiguration::class
-    ]
+        CoworkerAutoConfiguration::class,
+    ],
 )
 class DefaultPropertiesCoworkerIntegrationTest {
-
     @Autowired
     private lateinit var zeebeClient: ZeebeClient
 
     @Test
     fun `should work correctly with default annotation`() {
         // given
-        val model = Bpmn
-            .createExecutableProcess()
-            .startEvent()
-            .serviceTask()
-            //same as org.camunda.community.extension.coworker.spring.property.DefaultPropertiesCoworkerIntegrationTest.testWorker method name
-            .zeebeJobType("testWorker")
-            .endEvent()
-            .done()
+        val model =
+            Bpmn
+                .createExecutableProcess()
+                .startEvent()
+                .serviceTask()
+                // same as org.camunda.community.extension.coworker.spring.property.DefaultPropertiesCoworkerIntegrationTest.testWorker method name
+                .zeebeJobType("testWorker")
+                .endEvent()
+                .done()
 
-        val deploymentEvent = zeebeClient
-            .newDeployResourceCommand()
-            .addProcessModel(model, "default-annotation.bpmn")
-            .send()
-            .join()
+        val deploymentEvent =
+            zeebeClient
+                .newDeployResourceCommand()
+                .addProcessModel(model, "default-annotation.bpmn")
+                .send()
+                .join()
 
         // when
-        val result = zeebeClient
-            .newCreateInstanceCommand()
-            .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
-            .withResult()
-            .send()
-            .join()
+        val result =
+            zeebeClient
+                .newCreateInstanceCommand()
+                .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
+                .withResult()
+                .send()
+                .join()
 
         // then
         BpmnAssert.assertThat(result).isCompleted.hasNoIncidents()
     }
 
     @Coworker
-    suspend fun testWorker(activatedJob: ActivatedJob, jobClient: JobClient) {
+    suspend fun testWorker(
+        activatedJob: ActivatedJob,
+        jobClient: JobClient,
+    ) {
         jobClient.newCompleteCommand(activatedJob).send().await()
     }
 }

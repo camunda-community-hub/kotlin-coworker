@@ -22,15 +22,16 @@ import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 
 @ZeebeSpringTest
-@SpringBootTest(classes = [
-    JacksonAutoConfiguration::class,
-    ZeebeClientStarterAutoConfiguration::class,
-    CoworkerAutoConfiguration::class,
-    CoworkerAutoConfiguration::class,
-    WorkerErrorIntegrationTest::class
-])
+@SpringBootTest(
+    classes = [
+        JacksonAutoConfiguration::class,
+        ZeebeClientStarterAutoConfiguration::class,
+        CoworkerAutoConfiguration::class,
+        CoworkerAutoConfiguration::class,
+        WorkerErrorIntegrationTest::class,
+    ],
+)
 class WorkerErrorIntegrationTest {
-
     @SpykBean
     private lateinit var jobErrorHandler: JobErrorHandler
 
@@ -40,7 +41,10 @@ class WorkerErrorIntegrationTest {
     private lateinit var exceptionToThrow: Exception
 
     @Coworker("coworker-with-exception")
-    suspend fun coworkerWithException(activatedJob: ActivatedJob, jobClient: JobClient) {
+    suspend fun coworkerWithException(
+        activatedJob: ActivatedJob,
+        jobClient: JobClient,
+    ) {
         throw exceptionToThrow
     }
 
@@ -48,57 +52,61 @@ class WorkerErrorIntegrationTest {
     fun `should inner job error handler process exception from coworker`() {
         // given
         val message = "bad-happens"
-        val model = Bpmn
-            .createExecutableProcess()
-            .startEvent()
-            .serviceTask("error-service-task") {
-                it
-                    .zeebeJobType("coworker-with-exception")
-                    .zeebeJobRetries("0")
-                    .boundaryEvent()
-                    .error(message)
-                    .endEvent()
-                    .done()
-            }
-            .endEvent().error("missed")
-            .done()
+        val model =
+            Bpmn
+                .createExecutableProcess()
+                .startEvent()
+                .serviceTask("error-service-task") {
+                    it
+                        .zeebeJobType("coworker-with-exception")
+                        .zeebeJobRetries("0")
+                        .boundaryEvent()
+                        .error(message)
+                        .endEvent()
+                        .done()
+                }
+                .endEvent().error("missed")
+                .done()
 
-        val deploymentEvent = zeebeClient
-            .newDeployResourceCommand()
-            .addProcessModel(model, "error.bpmn")
-            .send()
-            .join()
+        val deploymentEvent =
+            zeebeClient
+                .newDeployResourceCommand()
+                .addProcessModel(model, "error.bpmn")
+                .send()
+                .join()
 
         exceptionToThrow = Exception(message)
-        val mockJobHandler = mockk<JobErrorHandler> {
-            coEvery {
-                handleError(exceptionToThrow, any(), any())
-            } coAnswers {
-                val activatedJob = it.invocation.args[1] as ActivatedJob
-                val caughtException = it.invocation.args[0] as Exception
-                zeebeClient
-                    .newThrowErrorCommand(activatedJob)
-                    .errorCode(caughtException.message)
-                    .send()
-                    .await()
+        val mockJobHandler =
+            mockk<JobErrorHandler> {
+                coEvery {
+                    handleError(exceptionToThrow, any(), any())
+                } coAnswers {
+                    val activatedJob = it.invocation.args[1] as ActivatedJob
+                    val caughtException = it.invocation.args[0] as Exception
+                    zeebeClient
+                        .newThrowErrorCommand(activatedJob)
+                        .errorCode(caughtException.message)
+                        .send()
+                        .await()
+                }
             }
-        }
         coEvery { jobErrorHandler.handleError(any(), any(), any()) } coAnswers {
             DefaultSpringZeebeErrorHandler(mockJobHandler, metricsRecorder = DefaultNoopMetricsRecorder())
                 .handleError(
                     it.invocation.args[0] as Exception,
                     it.invocation.args[1] as ActivatedJob,
-                    it.invocation.args[2] as JobClient
+                    it.invocation.args[2] as JobClient,
                 )
         }
 
         // when
-        val result = zeebeClient
-            .newCreateInstanceCommand()
-            .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
-            .withResult()
-            .send()
-            .join()
+        val result =
+            zeebeClient
+                .newCreateInstanceCommand()
+                .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
+                .withResult()
+                .send()
+                .join()
 
         // then
         BpmnAssert.assertThat(result).isCompleted.hasNoIncidents()
