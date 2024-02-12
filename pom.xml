@@ -27,8 +27,8 @@
 
   <repositories>
     <repository>
-      <id>jcenter</id>
-      <url>https://jcenter.bintray.com/</url>
+      <id>central</id>
+      <url>https://repo1.maven.org/maven2/</url>
     </repository>
   </repositories>
 
@@ -36,7 +36,7 @@
     <groupId>org.camunda.community</groupId>
     <artifactId>community-hub-release-parent</artifactId>
     <version>1.4.1</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <properties>
@@ -44,7 +44,6 @@
     <version.java>1.8</version.java>
     <maven.version>3.0</maven.version>
 
-    <detekt-maven-plugin.version>1.22.0</detekt-maven-plugin.version>
     <zeebe.version>8.2.7</zeebe.version>
 
     <protobuf.version>3.22.0</protobuf.version>
@@ -74,6 +73,8 @@
     <scala.version>2.13.10</scala.version>
     <awaitility.version>4.2.0</awaitility.version>
     <springmockk.version>3.1.2</springmockk.version>
+    <ktlint-plugin.version>3.0.0</ktlint-plugin.version>
+    <detekt-maven-plugin.version>1.22.0</detekt-maven-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -445,15 +446,14 @@
       <plugin>
         <groupId>com.github.gantsign.maven</groupId>
         <artifactId>ktlint-maven-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>${ktlint-plugin.version}</version>
         <executions>
           <execution>
-            <id>format-and-check</id>
+            <id>check</id>
             <goals>
               <goal>check</goal>
             </goals>
             <configuration>
-              <failOnViolation>false</failOnViolation>
               <sourceRoots>
                 <sourceRoot>${project.basedir}/src/main/kotlin</sourceRoot>
               </sourceRoots>

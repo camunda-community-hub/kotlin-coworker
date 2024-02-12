@@ -39,9 +39,6 @@ complexity:
     active: false
     threshold: 10
     includeStaticDeclarations: false
-#  LabeledExpression:
-#    active: true
-#    ignoredLabels: []
   LargeClass:
     active: true
     threshold: 500
@@ -50,12 +47,6 @@ complexity:
     active: true
     threshold: 60
     excludes: "**/test/**,**/*.Test.kt,**/*.Spec.kt,**/*.Spek.kt"
-#  LongParameterList:
-#    active: true
-#    functionThreshold: 6
-#    constructorThreshold: 7
-#    ignoreDefaultParameters: false
-#    excludes: "**/test/**,**/*.Test.kt,**/*.Spec.kt,**/*.Spek.kt,**/properties/**,**/configuration/**"
   MethodOverloading:
     active: false
     threshold: 6

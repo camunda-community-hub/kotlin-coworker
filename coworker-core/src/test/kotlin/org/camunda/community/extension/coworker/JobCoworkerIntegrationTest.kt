@@ -39,8 +39,7 @@ class JobCoworkerIntegrationTest {
     internal fun `should JobCoworker successfully execute task`() {
         val jobType = "myServiceTask"
         val simpleProcess =
-            Bpmn
-                .createExecutableProcess()
+            Bpmn.createExecutableProcess()
                 .startEvent()
                 .serviceTask("my-service-task")
                 .zeebeJobType(jobType)
@@ -102,8 +101,7 @@ class JobCoworkerIntegrationTest {
         // given
         val jobType = "customErrorHandler"
         val simpleProcess =
-            Bpmn
-                .createExecutableProcess()
+            Bpmn.createExecutableProcess()
                 .startEvent()
                 .serviceTask("custom-error-handler")
                 .zeebeJobType(jobType)
@@ -141,8 +139,7 @@ class JobCoworkerIntegrationTest {
         val jobType = "defaultErrorHandler"
         val serviceTaskName = "default-error-handler"
         val simpleProcess =
-            Bpmn
-                .createExecutableProcess()
+            Bpmn.createExecutableProcess()
                 .startEvent()
                 .serviceTask(serviceTaskName).zeebeJobRetries("3")
                 .zeebeJobType(jobType)

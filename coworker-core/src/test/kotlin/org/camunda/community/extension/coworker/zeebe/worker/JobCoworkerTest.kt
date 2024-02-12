@@ -21,7 +21,6 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
-@Suppress("UNREACHABLE_CODE", "UNCHECKED_CAST")
 class JobCoworkerTest {
     @Test
     fun `should be polled expected counts`() {
@@ -29,7 +28,9 @@ class JobCoworkerTest {
         val standardDelay: Long = 100
         val jobExecutableFactory =
             mockk<JobExecutableFactory> {
-                every { create(any(), any()) } answers {
+                every {
+                    create(any(), any())
+                } answers {
                     val doneCallback = this.args[1] as suspend () -> Unit
 
                     object : suspend CoroutineScope.() -> Unit {
@@ -44,7 +45,9 @@ class JobCoworkerTest {
         val standardWaitPeriod = standardDelay * 2
         val jobPoller =
             mockk<JobPoller> {
-                coEvery { poll(any(), any(), any(), any(), any()) } coAnswers {
+                coEvery {
+                    poll(any(), any(), any(), any(), any())
+                } coAnswers {
                     val jobConsumer = args[1] as suspend (ActivatedJob) -> Unit
                     val doneCallback = args[2] as suspend (Int) -> Unit
                     delay(firstWaitPeriod)
@@ -70,7 +73,8 @@ class JobCoworkerTest {
         val waitPeriod: Long = 5000
         TimeUnit.MILLISECONDS.sleep(waitPeriod)
 
-        val expectedCountOfPolling = ((waitPeriod - standardDelay - firstWaitPeriod) / (standardWaitPeriod + standardDelay)).toInt()
+        val expectedCountOfPolling =
+            ((waitPeriod - standardDelay - firstWaitPeriod) / (standardWaitPeriod + standardDelay)).toInt()
 
         // then
         coVerify(

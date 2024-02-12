@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 class JobCoworker(
     private val maxJobsActive: Int,
-    private val activationThreshold: Int = (maxJobsActive * FL).roundToInt(),
+    private val activationThreshold: Int = (maxJobsActive * JOB_LOAD_FACTOR).roundToInt(),
     private val scheduledCoroutineContext: CoroutineContext,
     private val jobExecutableFactory: JobExecutableFactory,
     private val initialPollInterval: Duration,
@@ -204,6 +204,6 @@ class JobCoworker(
 
     companion object : KLogging() {
         private val DEFAULT_BACKOFF_SUPPLIER = BackoffSupplier.newBackoffBuilder().build()
-        private const val FL = 0.3f
+        private const val JOB_LOAD_FACTOR = 0.3f
     }
 }
