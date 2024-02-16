@@ -263,11 +263,6 @@
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-stdlib</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.github.ozsie</groupId>
-      <artifactId>detekt-maven-plugin</artifactId>
-      <version>${detekt-maven-plugin.version}</version>
-    </dependency>
   </dependencies>
 
   <build>
