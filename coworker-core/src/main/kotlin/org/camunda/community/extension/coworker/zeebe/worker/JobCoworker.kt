@@ -22,15 +22,14 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 class JobCoworker(
     private val maxJobsActive: Int,
-    private val activationThreshold: Int = (maxJobsActive * 0.3f).roundToInt(),
+    private val activationThreshold: Int = (maxJobsActive * JOB_LOAD_FACTOR).roundToInt(),
     private val scheduledCoroutineContext: CoroutineContext,
     private val jobExecutableFactory: JobExecutableFactory,
     private val initialPollInterval: Duration,
     private val backoffSupplier: BackoffSupplier,
     jobPoller: JobPoller,
-    private val additionalCoroutineContextProvider: JobCoroutineContextProvider
+    private val additionalCoroutineContextProvider: JobCoroutineContextProvider,
 ) : JobWorker, Closeable {
-
     private val remainingJobsMutex = Mutex()
     private var remainingJobs = 0
 
@@ -52,25 +51,17 @@ class JobCoworker(
         }
     }
 
-    override fun isOpen(): Boolean {
-        return runBlocking { isOpenWithSuspension() }
-    }
+    override fun isOpen(): Boolean = runBlocking { isOpenWithSuspension() }
 
-    suspend fun isOpenWithSuspension(): Boolean {
-        return acquiringJobsMutex.withLock { acquiringJobs }
-    }
+    suspend fun isOpenWithSuspension(): Boolean = acquiringJobsMutex.withLock { acquiringJobs }
 
-    override fun isClosed(): Boolean {
-        return runBlocking { isClosedWithSuspension() }
-    }
+    override fun isClosed(): Boolean = runBlocking { isClosedWithSuspension() }
 
-    suspend fun isClosedWithSuspension(): Boolean {
-        return !isOpenWithSuspension() && jobPollerMutex.withLock { claimableJobPoller } != null && remainingJobsMutex.withLock { remainingJobs <= 0 }
-    }
+    suspend fun isClosedWithSuspension(): Boolean =
+        !isOpenWithSuspension() && jobPollerMutex.withLock { claimableJobPoller } != null &&
+            remainingJobsMutex.withLock { remainingJobs <= 0 }
 
-    override fun close() {
-        return runBlocking { closeWithSuspension() }
-    }
+    override fun close() = runBlocking { closeWithSuspension() }
 
     suspend fun closeWithSuspension() {
         acquiringJobsMutex.withLock { acquiringJobs = false }
@@ -82,7 +73,8 @@ class JobCoworker(
                     isPollScheduled = true
                 }
                 isPollScheduled
-            }) {
+            }
+        ) {
             CoroutineScope(scheduledCoroutineContext).launch {
                 delay(pollIntervalMutex.withLock { pollInterval })
                 onScheduledPoll()
@@ -98,17 +90,15 @@ class JobCoworker(
         }
     }
 
-    private suspend fun shouldPoll(remainingJobs: Int): Boolean {
-        return acquiringJobsMutex.withLock { acquiringJobs } && remainingJobs <= activationThreshold
-    }
+    private suspend fun shouldPoll(remainingJobs: Int): Boolean =
+        acquiringJobsMutex.withLock { acquiringJobs } && remainingJobs <= activationThreshold
 
-    private suspend fun tryClaimJobPoller(): JobPoller? {
-        return jobPollerMutex.withLock {
+    private suspend fun tryClaimJobPoller(): JobPoller? =
+        jobPollerMutex.withLock {
             val result = claimableJobPoller
             claimableJobPoller = null
             result
         }
-    }
 
     private suspend fun tryPoll() {
         val jobPoller = tryClaimJobPoller()
@@ -139,7 +129,7 @@ class JobCoworker(
             maxJobsToActivate,
             { job: ActivatedJob -> handleJob(job) },
             { activatedJobs: Int -> onPollSuccess(jobPoller, activatedJobs) },
-            { error: Throwable -> onPollError(jobPoller, error) }
+            { error: Throwable -> onPollError(jobPoller, error) },
         ) { this.isOpenWithSuspension() }
     }
 
@@ -148,7 +138,10 @@ class JobCoworker(
     }
 
     /** Apply the backoff strategy by scheduling the next poll at a new interval  */
-    private suspend fun backoff(jobPoller: JobPoller, error: Throwable) {
+    private suspend fun backoff(
+        jobPoller: JobPoller,
+        error: Throwable,
+    ) {
         val prevInterval = pollIntervalMutex.withLock { pollInterval }
         try {
             val delay = backoffSupplier.supplyRetryDelay(prevInterval.inWholeMilliseconds).milliseconds
@@ -166,14 +159,18 @@ class JobCoworker(
         schedulePoll()
     }
 
-    private suspend fun onPollSuccess(jobPoller: JobPoller, activatedJobs: Int) {
+    private suspend fun onPollSuccess(
+        jobPoller: JobPoller,
+        activatedJobs: Int,
+    ) {
         // first release, then lookup remaining jobs, to allow handleJobFinished() to poll
         releaseJobPoller(jobPoller)
-        val actualRemainingJobs = remainingJobsMutex.withLock {
-            val result = remainingJobs
-            remainingJobs += activatedJobs
-            result
-        }
+        val actualRemainingJobs =
+            remainingJobsMutex.withLock {
+                val result = remainingJobs
+                remainingJobs += activatedJobs
+                result
+            }
         pollInterval = initialPollInterval
         if (actualRemainingJobs <= 0) {
             schedulePoll()
@@ -181,7 +178,10 @@ class JobCoworker(
         // if jobs were activated, then successive polling happens due to handleJobFinished
     }
 
-    private suspend fun onPollError(jobPoller: JobPoller, error: Throwable) {
+    private suspend fun onPollError(
+        jobPoller: JobPoller,
+        error: Throwable,
+    ) {
         backoff(jobPoller, error)
     }
 
@@ -191,11 +191,12 @@ class JobCoworker(
     }
 
     private suspend fun handleJobFinished() {
-        val actualRemainingJobs = remainingJobsMutex.withLock {
-            val result = remainingJobs
-            remainingJobs -= 1
-            result
-        }
+        val actualRemainingJobs =
+            remainingJobsMutex.withLock {
+                val result = remainingJobs
+                remainingJobs -= 1
+                result
+            }
         if (isPollScheduledMutex.withLock { !isPollScheduled } && shouldPoll(actualRemainingJobs)) {
             tryPoll()
         }
@@ -203,5 +204,6 @@ class JobCoworker(
 
     companion object : KLogging() {
         private val DEFAULT_BACKOFF_SUPPLIER = BackoffSupplier.newBackoffBuilder().build()
+        private const val JOB_LOAD_FACTOR = 0.3f
     }
 }

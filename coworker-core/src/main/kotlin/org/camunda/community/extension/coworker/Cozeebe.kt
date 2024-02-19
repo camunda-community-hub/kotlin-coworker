@@ -5,8 +5,10 @@ import org.camunda.community.extension.coworker.zeebe.worker.builder.JobCoworker
 import org.camunda.community.extension.coworker.zeebe.worker.handler.JobHandler
 
 interface Cozeebe : AutoCloseable {
-
-    fun newCoWorker(jobType: String, jobHandler: JobHandler): JobCoworkerBuilder
+    fun newCoWorker(
+        jobType: String,
+        jobHandler: JobHandler,
+    ): JobCoworkerBuilder
 
     fun configuration(): ZeebeClientConfiguration
 }

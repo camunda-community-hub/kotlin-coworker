@@ -28,16 +28,15 @@ private const val OVERRIDABLE_WORKER_TYPE = "overridable-worker"
         JacksonAutoConfiguration::class,
         ZeebeClientStarterAutoConfiguration::class,
         OverridePropertiesCoworkerIntegrationTest::class,
-        CoworkerAutoConfiguration::class
-    ]
+        CoworkerAutoConfiguration::class,
+    ],
 )
 @TestPropertySource(
     properties = [
-        "zeebe.client.worker.override.overridable-worker.fetch-variables[0]=${FROM_OVERRIDE_VAR_NAME}"
-    ]
+        "zeebe.client.worker.override.overridable-worker.fetch-variables[0]=${FROM_OVERRIDE_VAR_NAME}",
+    ],
 )
 class OverridePropertiesCoworkerIntegrationTest {
-
     private val fromOverrideVar = "fromOverride"
     private val fromAnnotationVar = "fromAnnotation"
 
@@ -45,7 +44,10 @@ class OverridePropertiesCoworkerIntegrationTest {
     private lateinit var zeebeClient: ZeebeClient
 
     @Coworker(type = OVERRIDABLE_WORKER_TYPE, fetchVariables = "#{new String[1] {'${FROM_ANNOTATION_VAR_NAME}'}}")
-    suspend fun testCoworker(activatedJob: ActivatedJob, jobClient: JobClient) {
+    suspend fun testCoworker(
+        activatedJob: ActivatedJob,
+        jobClient: JobClient,
+    ) {
         assertThat(activatedJob.variablesAsMap)
             .hasSize(1)
             .containsEntry(FROM_OVERRIDE_VAR_NAME, fromOverrideVar)
@@ -57,26 +59,29 @@ class OverridePropertiesCoworkerIntegrationTest {
     @Disabled("https://github.com/camunda-community-hub/kotlin-coworker/issues/59")
     @Test
     fun `should override works for fetch-variables`() {
-        val model = Bpmn
-            .createExecutableProcess()
-            .startEvent()
-            .serviceTask().zeebeJobType(OVERRIDABLE_WORKER_TYPE).zeebeJobRetries("0")
-            .endEvent()
-            .done()
+        val model =
+            Bpmn
+                .createExecutableProcess()
+                .startEvent()
+                .serviceTask().zeebeJobType(OVERRIDABLE_WORKER_TYPE).zeebeJobRetries("0")
+                .endEvent()
+                .done()
 
-        val deploymentEvent = zeebeClient
-            .newDeployResourceCommand()
-            .addProcessModel(model, "overridable-worker.bpmn")
-            .send()
-            .join()
+        val deploymentEvent =
+            zeebeClient
+                .newDeployResourceCommand()
+                .addProcessModel(model, "overridable-worker.bpmn")
+                .send()
+                .join()
 
-        val result = zeebeClient
-            .newCreateInstanceCommand()
-            .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
-            .variables(mapOf(FROM_OVERRIDE_VAR_NAME to fromOverrideVar, FROM_ANNOTATION_VAR_NAME to fromAnnotationVar))
-            .withResult()
-            .send()
-            .join()
+        val result =
+            zeebeClient
+                .newCreateInstanceCommand()
+                .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
+                .variables(mapOf(FROM_OVERRIDE_VAR_NAME to fromOverrideVar, FROM_ANNOTATION_VAR_NAME to fromAnnotationVar))
+                .withResult()
+                .send()
+                .join()
 
         BpmnAssert.assertThat(result).isCompleted.hasNoIncidents()
     }

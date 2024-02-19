@@ -1,7 +1,6 @@
 package org.camunda.community.extension.coworker.spring
 
 import com.ninjasquad.springmockk.MockkBean
-import com.ninjasquad.springmockk.clear
 import io.camunda.zeebe.client.ZeebeClient
 import io.camunda.zeebe.client.api.response.ActivatedJob
 import io.camunda.zeebe.client.api.worker.JobClient
@@ -28,11 +27,10 @@ private const val THROW_NAME = "throw"
         JacksonAutoConfiguration::class,
         ZeebeClientStarterAutoConfiguration::class,
         CoworkerAutoConfiguration::class,
-        MetricsTest::class
-    ]
+        MetricsTest::class,
+    ],
 )
 class MetricsTest {
-
     @Autowired
     private lateinit var zeebeClient: ZeebeClient
 
@@ -40,25 +38,32 @@ class MetricsTest {
     private lateinit var metricsRecorder: MetricsRecorder
 
     @Coworker(type = PASS_NAME)
-    suspend fun testPass(jobClient: JobClient, job: ActivatedJob) {
+    suspend fun testPass(
+        jobClient: JobClient,
+        job: ActivatedJob,
+    ) {
         jobClient.newCompleteCommand(job).send().await()
     }
 
     @Coworker(type = "throw")
-    suspend fun testThrow(jobClient: JobClient, job: ActivatedJob) {
-        throw Exception("Something goes wrooong!")
+    suspend fun testThrow(
+        jobClient: JobClient,
+        job: ActivatedJob,
+    ) {
+        error("Something goes wrooong!")
     }
 
     @Test
     fun `should increase metrics on invocation only`() {
         // given
         clearMocks(metricsRecorder, answers = false)
-        val modelInstance = Bpmn
-            .createExecutableProcess()
-            .startEvent()
-            .serviceTask().zeebeJobType(PASS_NAME)
-            .endEvent()
-            .done()
+        val modelInstance =
+            Bpmn
+                .createExecutableProcess()
+                .startEvent()
+                .serviceTask().zeebeJobType(PASS_NAME)
+                .endEvent()
+                .done()
         val deploymentEvent =
             zeebeClient.newDeployResourceCommand().addProcessModel(modelInstance, "pass.bpmn").send().join()
 
@@ -71,7 +76,7 @@ class MetricsTest {
             metricsRecorder.increase(
                 MetricsRecorder.METRIC_NAME_JOB,
                 MetricsRecorder.ACTION_ACTIVATED,
-                PASS_NAME
+                PASS_NAME,
             )
         }
     }
@@ -97,14 +102,14 @@ class MetricsTest {
             metricsRecorder.increase(
                 MetricsRecorder.METRIC_NAME_JOB,
                 MetricsRecorder.ACTION_ACTIVATED,
-                THROW_NAME
+                THROW_NAME,
             )
         }
         verify(exactly = 1) {
             metricsRecorder.increase(
                 MetricsRecorder.METRIC_NAME_JOB,
                 MetricsRecorder.ACTION_FAILED,
-                THROW_NAME
+                THROW_NAME,
             )
         }
     }

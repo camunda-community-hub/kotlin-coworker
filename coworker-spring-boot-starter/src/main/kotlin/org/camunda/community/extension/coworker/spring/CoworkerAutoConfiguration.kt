@@ -42,23 +42,20 @@ import org.springframework.core.env.Environment
     ZeebeClientStarterAutoConfiguration::class,
     ZeebeClient::class,
     ZeebeClientSpringConfiguration::class,
-    AnnotationProcessorConfiguration::class
+    AnnotationProcessorConfiguration::class,
 )
 open class CoworkerAutoConfiguration {
-
     @Bean
     open fun coZeebe(zeebeClient: ZeebeClient): Cozeebe = LazyCozeebe(zeebeClient)
 
     @ConditionalOnMissingBean
     @Bean
-    open fun defaultJobErrorHandler(
-        metricsRecorder: MetricsRecorder
-    ): JobErrorHandler = DefaultSpringZeebeErrorHandler(metricsRecorder = metricsRecorder)
+    open fun defaultJobErrorHandler(metricsRecorder: MetricsRecorder): JobErrorHandler =
+        DefaultSpringZeebeErrorHandler(metricsRecorder = metricsRecorder)
 
     @ConditionalOnMissingBean
     @Bean
-    open fun defaultJobCoroutineContextProvider(): JobCoroutineContextProvider =
-        JobCoroutineContextProvider { _ -> MDCContext() }
+    open fun defaultJobCoroutineContextProvider(): JobCoroutineContextProvider = JobCoroutineContextProvider { _ -> MDCContext() }
 
     @ConditionalOnMissingBean
     @Bean
@@ -73,45 +70,45 @@ open class CoworkerAutoConfiguration {
         jobCoroutineContextProvider: JobCoroutineContextProvider,
         jobErrorHandler: JobErrorHandler,
         jsonMapper: JsonMapper,
-        metricsRecorder: MetricsRecorder
-    ): CoworkerManager = CoworkerManager(
-        jobCoroutineContextProvider,
-        jobErrorHandler,
-        jsonMapper,
-        metricsRecorder
-    )
+        metricsRecorder: MetricsRecorder,
+    ): CoworkerManager =
+        CoworkerManager(
+            jobCoroutineContextProvider,
+            jobErrorHandler,
+            jsonMapper,
+            metricsRecorder,
+        )
 
     @Bean
     open fun annotationValueEvaluator(
         configurableBeanFactory: ConfigurableBeanFactory,
-        environment: Environment
+        environment: Environment,
     ): AnnotationValueEvaluator = SpringContextSpelAnnotationValueEvaluator(configurableBeanFactory, environment)
 
     @Bean
-    open fun coworkerToCoworkerValueMapper(
-        annotationValueEvaluator: AnnotationValueEvaluator
-    ): CoworkerToCoworkerValueMapper = CoworkerToCoworkerValueMapperImpl(annotationValueEvaluator)
+    open fun coworkerToCoworkerValueMapper(annotationValueEvaluator: AnnotationValueEvaluator): CoworkerToCoworkerValueMapper =
+        CoworkerToCoworkerValueMapperImpl(annotationValueEvaluator)
 
     @Bean
-    open fun methodToCoworkerMapper(
-        coworkerToCoworkerValueMapper: CoworkerToCoworkerValueMapper
-    ): MethodToCoworkerMapper = MethodToCoworkerMapperImpl(
-        coworkerToCoworkerValueMapper
-    )
+    open fun methodToCoworkerMapper(coworkerToCoworkerValueMapper: CoworkerToCoworkerValueMapper): MethodToCoworkerMapper =
+        MethodToCoworkerMapperImpl(
+            coworkerToCoworkerValueMapper,
+        )
 
     @Bean
     open fun propertyBasedCoworkerCustomizer(
-        zeebeClientConfigurationProperties: ZeebeClientConfigurationProperties
+        zeebeClientConfigurationProperties: ZeebeClientConfigurationProperties,
     ): CoworkerValueCustomizer = PropertyBasedCoworkerCustomizer(zeebeClientConfigurationProperties)
 
     @Bean
     open fun coworkerAnnotationProcessor(
         coworkerManager: CoworkerManager,
         methodToCoworkerMapper: MethodToCoworkerMapper,
-        coworkerValueCustomizers: List<CoworkerValueCustomizer>
-    ): AbstractZeebeAnnotationProcessor = CoworkerAnnotationProcessor(
-        coworkerManager,
-        methodToCoworkerMapper,
-        coworkerValueCustomizers
-    )
+        coworkerValueCustomizers: List<CoworkerValueCustomizer>,
+    ): AbstractZeebeAnnotationProcessor =
+        CoworkerAnnotationProcessor(
+            coworkerManager,
+            methodToCoworkerMapper,
+            coworkerValueCustomizers,
+        )
 }

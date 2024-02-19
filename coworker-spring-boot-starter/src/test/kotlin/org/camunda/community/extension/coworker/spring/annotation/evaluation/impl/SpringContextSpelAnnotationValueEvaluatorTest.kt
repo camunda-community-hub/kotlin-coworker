@@ -20,14 +20,16 @@ class SpringContextSpelAnnotationValueEvaluatorTest {
     @BeforeEach
     fun setUp() {
         mockBeanExpressionResolver = mockk()
-        configurableBeanFactory = mockk {
-            every { beanExpressionResolver } returns mockBeanExpressionResolver
-        }
+        configurableBeanFactory =
+            mockk {
+                every { beanExpressionResolver } returns mockBeanExpressionResolver
+            }
         environment = mockk()
-        springContextSpelAnnotationValueEvaluator = SpringContextSpelAnnotationValueEvaluator(
-            configurableBeanFactory,
-            environment
-        )
+        springContextSpelAnnotationValueEvaluator =
+            SpringContextSpelAnnotationValueEvaluator(
+                configurableBeanFactory,
+                environment,
+            )
     }
 
     @Test
@@ -43,15 +45,16 @@ class SpringContextSpelAnnotationValueEvaluatorTest {
                 valueWithoutPlaceholders,
                 match {
                     it.beanFactory == configurableBeanFactory && it.scope == ImmutableMapScope(evaluationContext)
-                }
+                },
             )
         } returns resultValue
 
         // when
-        val evaluatedValue = springContextSpelAnnotationValueEvaluator.evaluate<String>(
-            valueToEvaluate,
-            evaluationContext
-        )
+        val evaluatedValue =
+            springContextSpelAnnotationValueEvaluator.evaluate<String>(
+                valueToEvaluate,
+                evaluationContext,
+            )
 
         // then
         assertThat(evaluatedValue).isEqualTo(resultValue)
@@ -61,7 +64,7 @@ class SpringContextSpelAnnotationValueEvaluatorTest {
                 valueWithoutPlaceholders,
                 match {
                     it.beanFactory == configurableBeanFactory && it.scope == ImmutableMapScope(evaluationContext)
-                }
+                },
             )
         }
     }

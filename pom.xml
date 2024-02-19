@@ -25,11 +25,18 @@
     <tag>HEAD</tag>
   </scm>
 
+  <repositories>
+    <repository>
+      <id>central</id>
+      <url>https://repo1.maven.org/maven2/</url>
+    </repository>
+  </repositories>
+
   <parent>
     <groupId>org.camunda.community</groupId>
     <artifactId>community-hub-release-parent</artifactId>
     <version>1.4.1</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <properties>
@@ -66,6 +73,8 @@
     <scala.version>2.13.10</scala.version>
     <awaitility.version>4.2.0</awaitility.version>
     <springmockk.version>3.1.2</springmockk.version>
+    <ktlint-plugin.version>3.0.0</ktlint-plugin.version>
+    <detekt-maven-plugin.version>1.22.0</detekt-maven-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -401,6 +410,52 @@
             <goals>
               <goal>extract-flaky-tests</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.github.ozsie</groupId>
+        <artifactId>detekt-maven-plugin</artifactId>
+        <version>${detekt-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals><goal>check</goal></goals>
+            <configuration>
+              <report>
+                <report>xml:${project.basedir}/target/site/detekt.xml</report>
+                <report>html:${project.basedir}/target/site/detekt.html</report>
+              </report>
+              <config>detekt.yml</config>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>io.gitlab.arturbosch.detekt</groupId>
+            <artifactId>detekt-rules-libraries</artifactId>
+            <version>${detekt-maven-plugin.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>com.github.gantsign.maven</groupId>
+        <artifactId>ktlint-maven-plugin</artifactId>
+        <version>${ktlint-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <sourceRoots>
+                <sourceRoot>${project.basedir}/src/main/kotlin</sourceRoot>
+              </sourceRoots>
+              <testSourceRoots>
+                <testSourceRoot>${project.basedir}/src/test/kotlin</testSourceRoot>
+              </testSourceRoots>
+            </configuration>
           </execution>
         </executions>
       </plugin>

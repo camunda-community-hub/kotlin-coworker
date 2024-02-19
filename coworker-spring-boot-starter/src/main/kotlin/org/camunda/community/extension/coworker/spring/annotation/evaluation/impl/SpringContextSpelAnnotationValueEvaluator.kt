@@ -8,17 +8,20 @@ import org.springframework.core.env.Environment
 
 class SpringContextSpelAnnotationValueEvaluator(
     private val configurableBeanFactory: ConfigurableBeanFactory,
-    private val environment: Environment
+    private val environment: Environment,
 ) : AnnotationValueEvaluator {
+    private val expressionResolver =
+        requireNotNull(configurableBeanFactory.beanExpressionResolver) {
+            "Please, provide the `beanExpressionResolver` to resolve values in annotations"
+        }
 
-    private val expressionResolver = requireNotNull(configurableBeanFactory.beanExpressionResolver) {
-        "Please, provide the `beanExpressionResolver` to resolve values in annotations"
-    }
-
-    override fun <T> evaluate(value: String, evaluationContext: Map<String, Any>): T {
+    override fun <T> evaluate(
+        value: String,
+        evaluationContext: Map<String, Any>,
+    ): T {
         return expressionResolver.evaluate(
             environment.resolvePlaceholders(value),
-            BeanExpressionContext(configurableBeanFactory, ImmutableMapScope(evaluationContext))
+            BeanExpressionContext(configurableBeanFactory, ImmutableMapScope(evaluationContext)),
         ) as T
     }
 }

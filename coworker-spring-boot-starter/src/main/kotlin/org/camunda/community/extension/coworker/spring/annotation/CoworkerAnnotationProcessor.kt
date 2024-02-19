@@ -12,13 +12,11 @@ import kotlin.coroutines.Continuation
 class CoworkerAnnotationProcessor(
     private val coworkerManager: CoworkerManager,
     private val methodToCoworkerMapper: MethodToCoworkerMapper,
-    private val coworkerValueCustomizers: List<CoworkerValueCustomizer>
+    private val coworkerValueCustomizers: List<CoworkerValueCustomizer>,
 ) : AbstractZeebeAnnotationProcessor() {
-
     private val coworkerValues: MutableList<CoworkerValue> = mutableListOf()
-    override fun isApplicableFor(classInfo: ClassInfo): Boolean {
-        return classInfo.hasMethodAnnotation(Coworker::class.java)
-    }
+
+    override fun isApplicableFor(classInfo: ClassInfo): Boolean = classInfo.hasMethodAnnotation(Coworker::class.java)
 
     override fun configureFor(classInfo: ClassInfo) {
         ReflectionUtils.doWithMethods(
@@ -27,7 +25,7 @@ class CoworkerAnnotationProcessor(
             ReflectionUtils.USER_DECLARED_METHODS
                 .and { method ->
                     method.parameterTypes.contains(Continuation::class.java)
-                }
+                },
         )
     }
 
@@ -45,5 +43,4 @@ class CoworkerAnnotationProcessor(
     override fun stop(zeebeClient: ZeebeClient) {
         coworkerManager.closeAllWorkers()
     }
-
 }

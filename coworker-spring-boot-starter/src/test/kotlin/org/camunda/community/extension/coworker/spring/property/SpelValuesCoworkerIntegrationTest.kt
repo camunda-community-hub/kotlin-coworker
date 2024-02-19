@@ -26,16 +26,15 @@ import java.math.BigDecimal
         JacksonAutoConfiguration::class,
         ZeebeClientStarterAutoConfiguration::class,
         SpelValuesCoworkerIntegrationTest::class,
-        CoworkerAutoConfiguration::class
-    ]
+        CoworkerAutoConfiguration::class,
+    ],
 )
 @TestPropertySource(
     properties = [
-        "firstProp=true"
-    ]
+        "firstProp=true",
+    ],
 )
 class SpelValuesCoworkerIntegrationTest {
-
     @Autowired
     private lateinit var zeebeClient: ZeebeClient
 
@@ -53,13 +52,13 @@ class SpelValuesCoworkerIntegrationTest {
         pollInterval = "#{T(java.time.Duration).ofMillis(10)}",
         fetchVariables = "#{new String[2]{'firstVariable', 'secondVariable'}}",
         forceFetchAllVariables = "#{false == true}",
-        enabled = "#{\${firstProp}}"
+        enabled = "#{\${firstProp}}",
     )
     suspend fun enabledCoworkerMethod(
         activatedJob: ActivatedJob,
         jobClient: JobClient,
         @ZeebeVariable zeebeVar: Boolean,
-        @Variable variable: BigDecimal
+        @Variable variable: BigDecimal,
     ) {
         assertThat(zeebeVar).isEqualTo(this.zeebeVar)
         assertThat(variable).isEqualTo(this.variable.toBigDecimal())
@@ -69,7 +68,7 @@ class SpelValuesCoworkerIntegrationTest {
             .containsEntry("firstVariable", firstVariable)
             .containsEntry("secondVariable", secondVariable)
             .hasEntrySatisfying(
-                "variable"
+                "variable",
             ) { t -> assertThat(t).isEqualTo(this@SpelValuesCoworkerIntegrationTest.variable) }
         jobClient.newCompleteCommand(activatedJob).send().await()
     }
@@ -77,34 +76,37 @@ class SpelValuesCoworkerIntegrationTest {
     @Test
     fun `should enabledCoworker called`() {
         // given
-        val model = Bpmn
-            .createExecutableProcess()
-            .startEvent()
-            .serviceTask().zeebeJobType("enabled")
-            .endEvent()
-            .done()
+        val model =
+            Bpmn
+                .createExecutableProcess()
+                .startEvent()
+                .serviceTask().zeebeJobType("enabled")
+                .endEvent()
+                .done()
 
-        val deploymentEvent = zeebeClient
-            .newDeployResourceCommand()
-            .addProcessModel(model, "full-configured-coworker.bpmn")
-            .send()
-            .join()
+        val deploymentEvent =
+            zeebeClient
+                .newDeployResourceCommand()
+                .addProcessModel(model, "full-configured-coworker.bpmn")
+                .send()
+                .join()
 
         // when
-        val result = zeebeClient
-            .newCreateInstanceCommand()
-            .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
-            .variables(
-                mapOf(
-                    "firstVariable" to firstVariable,
-                    "secondVariable" to secondVariable,
-                    "zeebeVar" to zeebeVar,
-                    "variable" to variable
+        val result =
+            zeebeClient
+                .newCreateInstanceCommand()
+                .processDefinitionKey(deploymentEvent.processes.first().processDefinitionKey)
+                .variables(
+                    mapOf(
+                        "firstVariable" to firstVariable,
+                        "secondVariable" to secondVariable,
+                        "zeebeVar" to zeebeVar,
+                        "variable" to variable,
+                    ),
                 )
-            )
-            .withResult()
-            .send()
-            .join()
+                .withResult()
+                .send()
+                .join()
 
         // then
         BpmnAssert.assertThat(result).isCompleted.hasNoIncidents()

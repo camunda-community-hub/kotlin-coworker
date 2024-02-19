@@ -29,9 +29,10 @@ class JobExecutableFactoryTest {
     fun `should not call job error handler if job is success`() {
         // given
         val activatedJob = mockk<ActivatedJob>()
-        val doneCallback = mockk<suspend () -> Unit> {
-            coJustRun { this@mockk.invoke() }
-        }
+        val doneCallback =
+            mockk<suspend () -> Unit> {
+                coJustRun { this@mockk.invoke() }
+            }
         coJustRun { jobHandler.handle(jobClient, activatedJob) }
 
         // when
@@ -49,9 +50,10 @@ class JobExecutableFactoryTest {
     fun `should call job error handler in case of exception`() {
         // given
         val activatedJob = mockk<ActivatedJob>()
-        val doneCallback = mockk<suspend () -> Unit> {
-            coJustRun { this@mockk.invoke() }
-        }
+        val doneCallback =
+            mockk<suspend () -> Unit> {
+                coJustRun { this@mockk.invoke() }
+            }
         val exception = Exception("oops, something bad happens!")
         coEvery { jobHandler.handle(jobClient, activatedJob) } throws exception
         coJustRun { jobErrorHandler.handleError(exception, activatedJob, jobClient) }

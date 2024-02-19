@@ -23,18 +23,20 @@ import java.util.concurrent.atomic.AtomicBoolean
         JacksonAutoConfiguration::class,
         ZeebeClientStarterAutoConfiguration::class,
         CoworkerAutoConfiguration::class,
-        SmokeTest::class
-    ]
+        SmokeTest::class,
+    ],
 )
 open class SmokeTest {
-
     private val firstCalled: AtomicBoolean = AtomicBoolean(false)
 
     @Autowired
     private lateinit var zeebeClient: ZeebeClient
 
     @Coworker(type = "test1")
-    suspend fun firstWorker(jobClient: JobClient, activatedJob: ActivatedJob) {
+    suspend fun firstWorker(
+        jobClient: JobClient,
+        activatedJob: ActivatedJob,
+    ) {
         firstCalled.set(true)
         jobClient.newCompleteCommand(activatedJob.key).send().await()
     }
@@ -42,22 +44,24 @@ open class SmokeTest {
     @Test
     fun `should suspend worker be called`() {
         // given
-        val testBpmn = Bpmn
-            .createExecutableProcess("test1")
-            .startEvent()
-            .serviceTask().zeebeJobType("test1")
-            .endEvent()
-            .done()
+        val testBpmn =
+            Bpmn
+                .createExecutableProcess("test1")
+                .startEvent()
+                .serviceTask().zeebeJobType("test1")
+                .endEvent()
+                .done()
 
         zeebeClient.newDeployResourceCommand().addProcessModel(testBpmn, "test1.bpmn").send().join()
 
         // when
-        val processInstanceEvent = zeebeClient
-            .newCreateInstanceCommand()
-            .bpmnProcessId("test1")
-            .latestVersion()
-            .send()
-            .join()
+        val processInstanceEvent =
+            zeebeClient
+                .newCreateInstanceCommand()
+                .bpmnProcessId("test1")
+                .latestVersion()
+                .send()
+                .join()
 
         // then
         assertThat(processInstanceEvent).isStarted

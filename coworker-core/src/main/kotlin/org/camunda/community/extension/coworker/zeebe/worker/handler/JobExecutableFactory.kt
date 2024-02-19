@@ -12,15 +12,17 @@ import org.camunda.community.extension.coworker.zeebe.worker.handler.error.JobEr
 class JobExecutableFactory(
     private val jobClient: JobClient,
     private val jobHandler: JobHandler,
-    private val jobErrorHandler: JobErrorHandler
+    private val jobErrorHandler: JobErrorHandler,
 ) {
-
     fun create(
         job: ActivatedJob,
-        doneCallback: suspend () -> Unit
+        doneCallback: suspend () -> Unit,
     ): suspend CoroutineScope.() -> Unit = { executeJob(job, doneCallback) }
 
-    private suspend fun executeJob(job: ActivatedJob, doneCallback: suspend () -> Unit) {
+    private suspend fun executeJob(
+        job: ActivatedJob,
+        doneCallback: suspend () -> Unit,
+    ) {
         try {
             jobHandler.handle(jobClient, job)
         } catch (e: Exception) {

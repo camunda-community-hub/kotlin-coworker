@@ -14,7 +14,6 @@ import java.time.Duration
 import kotlin.time.toKotlinDuration
 
 class CoworkerToCoworkerValueMapperImplTest {
-
     private lateinit var coworkerToCoworkerValueMapperImpl: CoworkerToCoworkerValueMapperImpl
     private lateinit var annotationValueEvaluator: AnnotationValueEvaluator
 
@@ -35,17 +34,18 @@ class CoworkerToCoworkerValueMapperImplTest {
         val mockPollInterval = "mockPollInterval"
         val mockForceFetchAllVariables = "mockForceFetchAllVariables"
         val mockEnabled = "mockEnabled"
-        val coworkerAnnotation = mockk<Coworker> {
-            every { type } returns mockType
-            every { name } returns mockName
-            every { timeout } returns mockTimeout
-            every { maxJobsActive } returns mockMaxJobsActive
-            every { requestTimeout } returns mockRequestTimeout
-            every { pollInterval } returns mockPollInterval
-            every { fetchVariables } returns "mockFetchVariables"
-            every { forceFetchAllVariables } returns mockForceFetchAllVariables
-            every { enabled } returns mockEnabled
-        }
+        val coworkerAnnotation =
+            mockk<Coworker> {
+                every { type } returns mockType
+                every { name } returns mockName
+                every { timeout } returns mockTimeout
+                every { maxJobsActive } returns mockMaxJobsActive
+                every { requestTimeout } returns mockRequestTimeout
+                every { pollInterval } returns mockPollInterval
+                every { fetchVariables } returns "mockFetchVariables"
+                every { forceFetchAllVariables } returns mockForceFetchAllVariables
+                every { enabled } returns mockEnabled
+            }
         val methodInfo = mockk<MethodInfo>()
         val typeContextMap = mapOf("methodInfo" to methodInfo)
         val resultType = "resultType"
@@ -53,42 +53,42 @@ class CoworkerToCoworkerValueMapperImplTest {
         every {
             annotationValueEvaluator.evaluate<String>(
                 mockType,
-                typeContextMap
+                typeContextMap,
             )
         } returns resultType
         val resultName = "resultName"
         every {
             annotationValueEvaluator.evaluate<String>(
                 mockName,
-                commonContextMap
+                commonContextMap,
             )
         } returns resultName
         val resultTimeout = Duration.ofSeconds(1)
         every {
             annotationValueEvaluator.evaluate<Duration>(
                 mockTimeout,
-                commonContextMap
+                commonContextMap,
             )
         } returns resultTimeout
         val resultMaxJobsActive = 2
         every {
             annotationValueEvaluator.evaluate<Int>(
                 mockMaxJobsActive,
-                commonContextMap
+                commonContextMap,
             )
         } returns resultMaxJobsActive
         val resultRequestTimeout = Duration.ofMinutes(3)
         every {
             annotationValueEvaluator.evaluate<Duration>(
                 mockRequestTimeout,
-                commonContextMap
+                commonContextMap,
             )
         } returns resultRequestTimeout
         val resultPollInterval = Duration.ofMillis(4)
         every {
             annotationValueEvaluator.evaluate<Duration>(
                 mockPollInterval,
-                commonContextMap
+                commonContextMap,
             )
         } returns resultPollInterval
         every { annotationValueEvaluator.evaluate<Boolean>(mockForceFetchAllVariables, commonContextMap) } returns true
@@ -122,37 +122,43 @@ class CoworkerToCoworkerValueMapperImplTest {
         val mockPollInterval = "mockPollInterval"
         val mockFetchVariables = "mockFetchVariables"
         val mockEnabled = "mockEnabled"
-        val coworker = mockk<Coworker>(relaxed = true) {
-            every { type } returns mockType
-            every { name } returns mockName
-            every { timeout } returns mockTimeout
-            every { maxJobsActive } returns mockMaxJobsActive
-            every { requestTimeout } returns mockRequestTimeout
-            every { pollInterval } returns mockPollInterval
-            every { forceFetchAllVariables } returns mockForceFetchAllVariables
-            every { fetchVariables } returns mockFetchVariables
-            every { enabled } returns mockEnabled
-        }
-        val methodInfo = mockk<MethodInfo> {
-            every { getParametersFilteredByAnnotation(or(Variable::class.java, ZeebeVariable::class.java)) } returns emptyList()
-        }
+        val coworker =
+            mockk<Coworker>(relaxed = true) {
+                every { type } returns mockType
+                every { name } returns mockName
+                every { timeout } returns mockTimeout
+                every { maxJobsActive } returns mockMaxJobsActive
+                every { requestTimeout } returns mockRequestTimeout
+                every { pollInterval } returns mockPollInterval
+                every { forceFetchAllVariables } returns mockForceFetchAllVariables
+                every { fetchVariables } returns mockFetchVariables
+                every { enabled } returns mockEnabled
+            }
+        val methodInfo =
+            mockk<MethodInfo> {
+                every { getParametersFilteredByAnnotation(or(Variable::class.java, ZeebeVariable::class.java)) } returns emptyList()
+            }
         val methodInfoContextMap = mapOf("methodInfo" to methodInfo)
         val resultType = "resultType"
         every { annotationValueEvaluator.evaluate<String>(mockType, methodInfoContextMap) } returns resultType
         val commonContextMap = mapOf("type" to resultType) + methodInfoContextMap
         every { annotationValueEvaluator.evaluate<Boolean>(mockForceFetchAllVariables, commonContextMap) } returns false
         every { annotationValueEvaluator.evaluate<String>(mockName, commonContextMap) } returns ""
-        every { annotationValueEvaluator.evaluate<Duration>(
-            or(mockTimeout, or(mockRequestTimeout, mockPollInterval)),
-            commonContextMap
-        ) } returns Duration.ZERO
+        every {
+            annotationValueEvaluator.evaluate<Duration>(
+                or(mockTimeout, or(mockRequestTimeout, mockPollInterval)),
+                commonContextMap,
+            )
+        } returns Duration.ZERO
         every { annotationValueEvaluator.evaluate<Int>(mockMaxJobsActive, commonContextMap) } returns 0
         every { annotationValueEvaluator.evaluate<Boolean>(mockEnabled, commonContextMap) } returns true
         val resultFetchVariables = arrayOf("one", "two")
-        every { annotationValueEvaluator.evaluate<Array<String>>(
-            mockFetchVariables,
-            commonContextMap
-        ) } returns resultFetchVariables
+        every {
+            annotationValueEvaluator.evaluate<Array<String>>(
+                mockFetchVariables,
+                commonContextMap,
+            )
+        } returns resultFetchVariables
 
         // when
         val coworkerValue = coworkerToCoworkerValueMapperImpl.map(coworker, methodInfo)

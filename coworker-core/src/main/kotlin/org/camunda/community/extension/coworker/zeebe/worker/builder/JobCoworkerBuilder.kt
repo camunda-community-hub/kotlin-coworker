@@ -46,9 +46,8 @@ class JobCoworkerBuilder(
     var fetchVariables: List<String>? = null,
     var backoffSupplier: BackoffSupplier = DEFAULT_BACKOFF_SUPPLIER,
     var additionalCoroutineContextProvider: JobCoroutineContextProvider = JobCoroutineContextProvider { _: ActivatedJob -> MDCContext() },
-    var jobErrorHandler: JobErrorHandler = DefaultJobErrorHandler()
+    var jobErrorHandler: JobErrorHandler = DefaultJobErrorHandler(),
 ) {
-
     private fun checkPreconditions() {
         ensureNotNullNorEmpty("jobType", jobType)
         ensureGreaterThan("timeout", timeout.inWholeMilliseconds, 0L)
@@ -58,33 +57,36 @@ class JobCoworkerBuilder(
 
     fun open(): JobCoworker {
         checkPreconditions()
-        val requestBuilder = GatewayOuterClass.ActivateJobsRequest.newBuilder()
-            .setType(jobType)
-            .setTimeout(timeout.inWholeMilliseconds)
-            .setWorker(workerName)
-            .setMaxJobsToActivate(maxJobsActive)
-            .setRequestTimeout(requestTimeout.inWholeMilliseconds)
+        val requestBuilder =
+            GatewayOuterClass.ActivateJobsRequest.newBuilder()
+                .setType(jobType)
+                .setTimeout(timeout.inWholeMilliseconds)
+                .setWorker(workerName)
+                .setMaxJobsToActivate(maxJobsActive)
+                .setRequestTimeout(requestTimeout.inWholeMilliseconds)
         fetchVariables?.let {
             requestBuilder.addAllFetchVariable(it)
         }
         val deadline = requestTimeout.plus(DEADLINE_OFFSET)
         val jobExecutableFactory = JobExecutableFactory(jobClient, jobHandler, jobErrorHandler)
-        val jobPoller = JobPoller(
-            gatewayStubKt = gatewayStub,
-            requestBuilder = requestBuilder,
-            jsonMapper = jsonMapper,
-            requestTimeout = deadline,
-            retryThrowable = retryPredicate
-        )
-        val jobCoWorker = JobCoworker(
-            maxJobsActive = maxJobsActive,
-            scheduledCoroutineContext = executorService.asCoroutineDispatcher(),
-            jobExecutableFactory = jobExecutableFactory,
-            initialPollInterval = pollInterval,
-            backoffSupplier = backoffSupplier,
-            jobPoller = jobPoller,
-            additionalCoroutineContextProvider = additionalCoroutineContextProvider
-        )
+        val jobPoller =
+            JobPoller(
+                gatewayStubKt = gatewayStub,
+                requestBuilder = requestBuilder,
+                jsonMapper = jsonMapper,
+                requestTimeout = deadline,
+                retryThrowable = retryPredicate,
+            )
+        val jobCoWorker =
+            JobCoworker(
+                maxJobsActive = maxJobsActive,
+                scheduledCoroutineContext = executorService.asCoroutineDispatcher(),
+                jobExecutableFactory = jobExecutableFactory,
+                initialPollInterval = pollInterval,
+                backoffSupplier = backoffSupplier,
+                jobPoller = jobPoller,
+                additionalCoroutineContextProvider = additionalCoroutineContextProvider,
+            )
         closeables.add(jobCoWorker)
         return jobCoWorker
     }

@@ -23,28 +23,31 @@ class CoworkerManager(
     private val jobCoroutineContextProvider: JobCoroutineContextProvider,
     private val jobErrorHandler: JobErrorHandler,
     private val jsonMapper: JsonMapper,
-    private val metricsRecorder: MetricsRecorder
+    private val metricsRecorder: MetricsRecorder,
 ) {
-
     private val openedWorkers: MutableList<JobWorker> = mutableListOf()
 
-    fun openWorker(coworkerValue: CoworkerValue, cozeebe: Cozeebe) {
-        val coWorker = cozeebe.newCoWorker(coworkerValue.type) { client, job ->
-            suspendCoroutineUninterceptedOrReturn { it: Continuation<Any> ->
-                val args = createArguments(client, job, it, coworkerValue.methodInfo.parameters)
-                metricsRecorder.increase(MetricsRecorder.METRIC_NAME_JOB, MetricsRecorder.ACTION_ACTIVATED, job.type)
-                coworkerValue.methodInfo.invoke(*(args.toTypedArray()))
+    fun openWorker(
+        coworkerValue: CoworkerValue,
+        cozeebe: Cozeebe,
+    ) {
+        val coWorker =
+            cozeebe.newCoWorker(coworkerValue.type) { client, job ->
+                suspendCoroutineUninterceptedOrReturn { continuation: Continuation<Any> ->
+                    val args = createArguments(client, job, continuation, coworkerValue.methodInfo.parameters)
+                    metricsRecorder.increase(MetricsRecorder.METRIC_NAME_JOB, MetricsRecorder.ACTION_ACTIVATED, job.type)
+                    coworkerValue.methodInfo.invoke(*args.toTypedArray())
+                }
+            }.also { builder: JobCoworkerBuilder ->
+                builder.additionalCoroutineContextProvider = jobCoroutineContextProvider
+                builder.jobErrorHandler = jobErrorHandler
+                builder.workerName = coworkerValue.name
+                builder.timeout = coworkerValue.timeout
+                builder.maxJobsActive = coworkerValue.maxJobsActive
+                builder.requestTimeout = coworkerValue.requestTimeout
+                builder.pollInterval = coworkerValue.pollInterval
+                builder.fetchVariables = coworkerValue.fetchVariables
             }
-        }.also { builder: JobCoworkerBuilder ->
-            builder.additionalCoroutineContextProvider = jobCoroutineContextProvider
-            builder.jobErrorHandler = jobErrorHandler
-            builder.workerName = coworkerValue.name
-            builder.timeout = coworkerValue.timeout
-            builder.maxJobsActive = coworkerValue.maxJobsActive
-            builder.requestTimeout = coworkerValue.requestTimeout
-            builder.pollInterval = coworkerValue.pollInterval
-            builder.fetchVariables = coworkerValue.fetchVariables
-        }
         val worker = coWorker.open()
         openedWorkers.add(worker)
     }
@@ -53,8 +56,9 @@ class CoworkerManager(
         jobClient: JobClient,
         activatedJob: ActivatedJob,
         continuation: Continuation<Any>,
-        parameters: List<ParameterInfo>
-    ): List<Any> = parameters.flatMap {
+        parameters: List<ParameterInfo>,
+    ): List<Any> =
+        parameters.flatMap {
             val parameterInfo = it.parameterInfo
             val paramType = parameterInfo.type
             val args = mutableListOf<Any>()
@@ -64,24 +68,28 @@ class CoworkerManager(
                 args.add(activatedJob)
             } else if (Continuation::class.java.isAssignableFrom(paramType)) {
                 args.add(continuation)
-            } else if (parameterInfo.isAnnotationPresent(Variable::class.java) || parameterInfo.isAnnotationPresent(
-                    ZeebeVariable::class.java
+            } else if (parameterInfo.isAnnotationPresent(Variable::class.java) ||
+                parameterInfo.isAnnotationPresent(
+                    ZeebeVariable::class.java,
                 )
             ) {
                 val variable = activatedJob.variablesAsMap[it.parameterName]
-                val arg = if (variable != null && !paramType.isInstance(variable)) {
-                    jsonMapper.fromJson(jsonMapper.toJson(variable), paramType)
-                } else {
-                    paramType.cast(variable)
-                }
+                val arg =
+                    if (variable != null && !paramType.isInstance(variable)) {
+                        jsonMapper.fromJson(jsonMapper.toJson(variable), paramType)
+                    } else {
+                        paramType.cast(variable)
+                    }
                 args.add(arg)
-            } else if (parameterInfo.isAnnotationPresent(VariablesAsType::class.java) || parameterInfo.isAnnotationPresent(
-                    ZeebeVariablesAsType::class.java
+            } else if (parameterInfo.isAnnotationPresent(VariablesAsType::class.java) ||
+                parameterInfo.isAnnotationPresent(
+                    ZeebeVariablesAsType::class.java,
                 )
             ) {
                 args.add(activatedJob.getVariablesAsType(paramType))
-            } else if (parameterInfo.isAnnotationPresent(CustomHeaders::class.java) || parameterInfo.isAnnotationPresent(
-                    ZeebeCustomHeaders::class.java
+            } else if (parameterInfo.isAnnotationPresent(CustomHeaders::class.java) ||
+                parameterInfo.isAnnotationPresent(
+                    ZeebeCustomHeaders::class.java,
                 )
             ) {
                 args.add(activatedJob.customHeaders)

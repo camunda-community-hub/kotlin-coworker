@@ -6,9 +6,8 @@ import org.camunda.community.extension.coworker.spring.annotation.customization.
 import kotlin.time.Duration.Companion.milliseconds
 
 class PropertyBasedCoworkerCustomizer(
-    private val zeebeClientConfigurationProperties: ZeebeClientConfigurationProperties
+    private val zeebeClientConfigurationProperties: ZeebeClientConfigurationProperties,
 ) : CoworkerValueCustomizer {
-
     override fun customize(coworkerValue: CoworkerValue) {
         zeebeClientConfigurationProperties
             .worker
